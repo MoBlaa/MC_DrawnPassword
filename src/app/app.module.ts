@@ -3,10 +3,14 @@ import { NgModule } from '@angular/core';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
+import { DrawnPasswordComponent } from './drawn-password/drawn-password.component';
+import { MazeComponent } from './maze/maze.component';
 
 @NgModule({
   declarations: [
-    AppComponent
+    AppComponent,
+    DrawnPasswordComponent,
+    MazeComponent
   ],
   imports: [
     BrowserModule,
