@@ -1,3 +1,8 @@
-<canvas #maze [height]="mazeSize.height" [width]="mazeSize.width">
-    Browser doesn't support canvas!
-</canvas>
+<div id="nav">
+    <button #start (click)="redraw()">Start</button>
+</div>
+<div>
+    <canvas #maze [height]="mazeSize.height" [width]="mazeSize.width">
+        Browser doesn't support canvas!
+    </canvas>
+</div>

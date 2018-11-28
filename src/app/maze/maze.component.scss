@@ -1,5 +1,8 @@
 canvas {
-    border: 2px solid black;
-    width: calc(100% - 4px);
-    height: calc(100% - 4px);
+    margin: 5px;
+    margin-top: 10px + 10px + 5px; // body margin + #nav height + margin
+}
+#nav {
+    height: 10px;
+    margin: 0;
 }

@@ -11,6 +11,8 @@ interface Size {
   height: number;
 }
 
+// TODO: Quadratic everytime and centering
+
 @Component({
   selector: 'app-maze',
   templateUrl: './maze.component.html',
@@ -36,14 +38,15 @@ export class MazeComponent implements OnInit {
   cellUpdater() {
     return {
       next: cellCord => {
-        // console.log(`Drawing Cell @ x: ${cellCord.x}, y: ${cellCord.y}`);
+        console.log(`Drawing Cell @ x: ${cellCord.x}, y: ${cellCord.y}`);
         this.drawCell(cellCord.x, cellCord.y, cellCord);
       }
     };
   }
 
   ngOnInit() {
-    this.redraw(window.innerWidth, window.innerHeight);
+    this.updateMazeSize(window.innerWidth, window.innerHeight);
+    this.redraw();
   }
 
   @HostListener('window:resize', ['$event'])
@@ -51,8 +54,20 @@ export class MazeComponent implements OnInit {
     this.redraw(event.target.innerWidth, event.target.innerHeight);
   }
 
-  redraw(width: number, height: number) {
-    this.mazeSize = { height, width };
+  updateMazeSize(width: number, height: number) {
+    if ((this.mazeSize == null) || (this.mazeSize.width !== width && this.mazeSize.height !== height)) {
+      this.mazeSize = {
+        height: height - (4 * 10 + 25 + 2 * 10),
+        width: width - (3 * 10)
+      };
+    }
+  }
+
+  redraw(
+    width: number = this.mazeSize.width,
+    height: number = this.mazeSize.height
+  ) {
+    this.updateMazeSize(width, height);
     this.cellSize = {
       width: (this.mazeSize.width - this.mazeSize.width % this.columns) / this.columns,
       height: (this.mazeSize.height - this.mazeSize.height % this.rows) / this.rows
