@@ -1,9 +1,10 @@
-import { Component, OnInit, ViewChild, ElementRef, OnChanges } from '@angular/core';
-import { range } from 'rxjs';
+import { Component, OnInit, ViewChild, ElementRef, OnChanges, HostListener, AfterViewInit } from '@angular/core';
+import { range, PartialObserver } from 'rxjs';
 import { CastExpr } from '@angular/compiler';
 import { createText } from '@angular/core/src/view/text';
 import { element } from '@angular/core/src/render3';
 import { Cell, MazeService } from '../maze.service';
+import { Event } from '@angular/router';
 
 interface Size {
   width: number;
@@ -22,6 +23,7 @@ export class MazeComponent implements OnInit {
   rows: number;
   columns: number;
   wallSize: number;
+  mazeSize: Size;
 
   constructor(
     private service: MazeService
@@ -31,23 +33,33 @@ export class MazeComponent implements OnInit {
     this.wallSize = 5;
   }
 
-  ngOnInit() {
-    const canvasSize = {
-      height: this.canvas.nativeElement.height,
-      width: this.canvas.nativeElement.width
+  cellUpdater() {
+    return {
+      next: cellCord => {
+        // console.log(`Drawing Cell @ x: ${cellCord.x}, y: ${cellCord.y}`);
+        this.drawCell(cellCord.x, cellCord.y, cellCord);
+      }
     };
+  }
+
+  ngOnInit() {
+    this.redraw(window.innerWidth, window.innerHeight);
+  }
+
+  @HostListener('window:resize', ['$event'])
+  onResize(event) {
+    this.redraw(event.target.innerWidth, event.target.innerHeight);
+  }
+
+  redraw(width: number, height: number) {
+    this.mazeSize = { height, width };
     this.cellSize = {
-      width: (canvasSize.width - canvasSize.width % this.columns) / this.columns,
-      height: (canvasSize.height - canvasSize.height % this.rows) / this.rows
+      width: (this.mazeSize.width - this.mazeSize.width % this.columns) / this.columns,
+      height: (this.mazeSize.height - this.mazeSize.height % this.rows) / this.rows
     };
 
     this.service.generateMaze(this.columns, this.rows)
-      .subscribe(
-        cellCord => {
-          console.log(`Drawing Cell @ x: ${cellCord.x}, y: ${cellCord.y}`);
-          this.drawCell(cellCord.x, cellCord.y, cellCord);
-        });
-    // setTimeout(this.redraw, 1000);
+      .subscribe(this.cellUpdater());
   }
 
   drawCell(x_: number, y_: number, cell: Cell) {
