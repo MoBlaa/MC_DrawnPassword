@@ -29,86 +29,81 @@ export class MazeService {
   generateMaze(width: number, height: number): Observable<Cell & Coordinates> {
     return new Observable(observer => {
       const maze = new Array<Array<Cell>>();
-    const indexQueue = this.getQueue(width, height);
-    const stack = new Array<Coordinates>();
-    for (let i = 0; i < width; i++) {
-      maze.push(new Array<Cell>());
-      for (let j = 0; j < height; j++) {
-        maze[i].push({
-          walls: [true, true, true, true],
-          visited: false
-        });
-      }
-    }
-
-    let currentIndex: Coordinates;
-    let current: Cell;
-    do {
-      currentIndex = indexQueue.pop();
-
-      if (currentIndex === undefined) {
-        console.log('Got back undefined of Queue');
+      const indexQueue = this.getQueue(width, height);
+      const stack = new Array<Coordinates>();
+      for (let i = 0; i < width; i++) {
+        maze.push(new Array<Cell>());
+        for (let j = 0; j < height; j++) {
+          maze[i].push({
+            walls: [true, true, true, true],
+            visited: false
+          });
+        }
       }
 
-      current = maze[currentIndex.x][currentIndex.y];
+      let currentIndex: Coordinates;
+      let current: Cell;
+      do {
+        currentIndex = indexQueue.pop();
 
-      current.visited = true;
+        current = maze[currentIndex.x][currentIndex.y];
 
-      // Check if unvisited neighbours are present
-      const unvisited = new Array<Cell & { dir: number, cord: Coordinates }>();
-      // iterate over north, east, south, west
-      for (const direction of Directions) {
-        const coordinates: Coordinates = { x: currentIndex.x, y: currentIndex.y };
-        if (direction === Direction.NORTH) {
-          coordinates.y -= 1;
-        } else if (direction === Direction.SOUTH) {
-          coordinates.y += 1;
-        } else if (direction === Direction.EAST) {
-          coordinates.x += 1;
-        } else if (direction === Direction.WEST) {
-          coordinates.x -= 1;
+        current.visited = true;
+
+        // Check if unvisited neighbours are present
+        const unvisited = new Array<Cell & { dir: number, cord: Coordinates }>();
+        // iterate over north, east, south, west
+        for (const direction of Directions) {
+          const coordinates: Coordinates = { x: currentIndex.x, y: currentIndex.y };
+          if (direction === Direction.NORTH) {
+            coordinates.y -= 1;
+          } else if (direction === Direction.SOUTH) {
+            coordinates.y += 1;
+          } else if (direction === Direction.EAST) {
+            coordinates.x += 1;
+          } else if (direction === Direction.WEST) {
+            coordinates.x -= 1;
+          } else {
+            console.log('Error while processign coordinates, got direction: ' + direction);
+            return;
+          }
+
+          // Check if out of bounds -> if yes, skip this direction
+          if (coordinates.x < 0 || coordinates.x >= width || coordinates.y < 0 || coordinates.y >= height) {
+            continue;
+          }
+
+          // Check if neighbour has been visited yet
+          const neighbour = maze[coordinates.x][coordinates.y];
+          if (!neighbour.visited) {
+            unvisited.push({ ...neighbour, dir: direction, cord: coordinates });
+          }
+        }
+
+        // If some unvisited choose, randomly one of them to visit
+        if (unvisited.length > 0) {
+          stack.push(currentIndex);
+
+          const randomIndex = this.getRandom(0, unvisited.length - 1);
+          // Remove wall between current and next cell
+          const next = unvisited[randomIndex];
+
+          // Remove the wall
+          current.walls[next.dir] = false;
+          next.walls[(next.dir + 2) % 4] = false;
+          // Make next to to current in next round
+          indexQueue.push(next.cord);
+
+          observer.next({ ...current, x: currentIndex.x, y: currentIndex.y });
+          observer.next({ ...next, x: next.cord.x, y: next.cord.y });
         } else {
-          console.log('Error while processign coordinates, got direction: ' + direction);
-          return;
+          const next = stack.pop();
+
+          if (next !== undefined) {
+            indexQueue.push(next);
+          }
         }
-
-        // Check if out of bounds -> if yes, skip this direction
-        if (coordinates.x < 0 || coordinates.x >= width || coordinates.y < 0 || coordinates.y >= height) {
-          continue;
-        }
-
-        // Check if neighbour has been visited yet
-        const neighbour = maze[coordinates.x][coordinates.y];
-        if (!neighbour.visited) {
-          unvisited.push({ ...neighbour, dir: direction, cord: coordinates });
-        }
-      }
-
-      // If some unvisited choose, randomly one of them to visit
-      if (unvisited.length > 0) {
-        stack.push(currentIndex);
-
-        const randomIndex = this.getRandom(0, unvisited.length - 1);
-        // Remove wall between current and next cell
-        const next = unvisited[randomIndex];
-
-        // Remove the wall
-        current.walls[next.dir] = false;
-        next.walls[(next.dir + 2) % 4] = false;
-        // Make next to to current in next round
-        indexQueue.push(next.cord);
-
-        observer.next({...current, x: currentIndex.x, y: currentIndex.y});
-        observer.next({...next, x: next.cord.x, y: next.cord.y});
-      } else {
-        const next = stack.pop();
-
-        if (next !== undefined) {
-          indexQueue.push(next);
-        }
-      }
-    } while (indexQueue.length > 0);
-    observer.complete();
+      } while (indexQueue.length > 0);
     });
   }
 
