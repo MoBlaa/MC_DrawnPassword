@@ -1,1 +1,5 @@
-<canvas #maze height="1000" width="1000">
+<canvas #maze [height]="canvasSize + 1" [width]="canvasSize + 1"></canvas>
+
+<p>
+    <span>Generating with size: {{canvasSize}}</span> <button (click)="redraw()">Regenerate Maze</button>
+</p>
