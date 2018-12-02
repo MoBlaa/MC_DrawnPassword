@@ -26,14 +26,14 @@ export class MazeService {
 
   constructor() { }
 
-  generateMaze(width: number, height: number): Observable<Cell & Coordinates> {
+  generateMaze(size: number): Observable<Cell & Coordinates> {
     return new Observable(observer => {
       const maze = new Array<Array<Cell>>();
-      const indexQueue = this.getQueue(width, height);
+      const indexQueue = this.getQueue(size);
       const stack = new Array<Coordinates>();
-      for (let i = 0; i < width; i++) {
+      for (let i = 0; i < size; i++) {
         maze.push(new Array<Cell>());
-        for (let j = 0; j < height; j++) {
+        for (let j = 0; j < size; j++) {
           maze[i].push({
             walls: [true, true, true, true],
             visited: false
@@ -69,7 +69,7 @@ export class MazeService {
           }
 
           // Check if out of bounds -> if yes, skip this direction
-          if (coordinates.x < 0 || coordinates.x >= width || coordinates.y < 0 || coordinates.y >= height) {
+          if (coordinates.x < 0 || coordinates.x >= size || coordinates.y < 0 || coordinates.y >= size) {
             continue;
           }
 
@@ -107,11 +107,11 @@ export class MazeService {
     });
   }
 
-  getQueue(x: number, y: number): Array<Coordinates> {
-    const n = x * y;
+  getQueue(size: number): Array<Coordinates> {
+    const n = size * size;
     const array = new Array<Coordinates>();
-    for (let i = 0; i < x; i++) {
-      for (let j = 0; j < y; j++) {
+    for (let i = 0; i < size; i++) {
+      for (let j = 0; j < size; j++) {
         array.push({ x: i, y: j });
       }
     }

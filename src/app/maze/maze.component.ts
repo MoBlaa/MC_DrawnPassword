@@ -1,15 +1,8 @@
 import { Component, OnInit, ViewChild, ElementRef, OnChanges, HostListener, AfterViewInit } from '@angular/core';
-import { range, PartialObserver } from 'rxjs';
-import { CastExpr } from '@angular/compiler';
-import { createText } from '@angular/core/src/view/text';
-import { element } from '@angular/core/src/render3';
 import { Cell, MazeService } from '../maze.service';
-import { Event } from '@angular/router';
 
-interface Size {
-  width: number;
-  height: number;
-}
+const COLOR_WHITE = '#ffffff',
+  COLOR_BLACK = '#000000';
 
 // TODO: Quadratic everytime and centering
 
@@ -21,17 +14,18 @@ interface Size {
 export class MazeComponent implements OnInit {
 
   @ViewChild('maze') canvas: ElementRef;
-  cellSize: Size;
-  rows: number;
-  columns: number;
+  cellSize: number;
+  // Wall Size in Pixels
   wallSize: number;
-  mazeSize: Size;
+  // Number of cells in a row/column
+  mazeSize: number;
+  // Absolute Maze size - in Pixels
+  absoluteMazeSize: number;
 
   constructor(
     private service: MazeService
   ) {
-    this.rows = 10;
-    this.columns = 10;
+    this.mazeSize = 10;
     this.wallSize = 5;
   }
 
@@ -44,75 +38,68 @@ export class MazeComponent implements OnInit {
     };
   }
 
+  setAbsoluteMazeSize(absSize: number): void {
+    this.clearMaze();
+    this.absoluteMazeSize = ((absSize) - (absSize % this.mazeSize));
+    this.cellSize = this.absoluteMazeSize / this.mazeSize;
+    console.log(`Updating size - abs=${this.absoluteMazeSize}px, rel:${this.mazeSize} Cells`);
+  }
+
   ngOnInit() {
-    this.updateMazeSize(window.innerWidth, window.innerHeight);
+    const width = this.canvas.nativeElement.width,
+      height = this.canvas.nativeElement.height;
+    this.setAbsoluteMazeSize(height > width ? width : height);
     this.redraw();
   }
 
-  @HostListener('window:resize', ['$event'])
-  onResize(event) {
-    this.redraw(event.target.innerWidth, event.target.innerHeight);
-  }
+  // should only clear the canvas and draw a new maze
+  redraw() {
+    this.clearMaze();
 
-  updateMazeSize(width: number, height: number) {
-    if ((this.mazeSize == null) || (this.mazeSize.width !== width && this.mazeSize.height !== height)) {
-      this.mazeSize = {
-        height: height - (4 * 10 + 25 + 2 * 10),
-        width: width - (3 * 10)
-      };
-    }
-  }
-
-  redraw(
-    width: number = this.mazeSize.width,
-    height: number = this.mazeSize.height
-  ) {
-    this.updateMazeSize(width, height);
-    this.cellSize = {
-      width: (this.mazeSize.width - this.mazeSize.width % this.columns) / this.columns,
-      height: (this.mazeSize.height - this.mazeSize.height % this.rows) / this.rows
-    };
-
-    this.service.generateMaze(this.columns, this.rows)
+    this.service.generateMaze(this.mazeSize)
       .subscribe(this.cellUpdater());
+  }
+
+  clearMaze(): void {
+    const context: CanvasRenderingContext2D = this.canvas.nativeElement.getContext('2d');
+    context.fillStyle = COLOR_WHITE;
+    context.fillRect(0, 0, this.absoluteMazeSize, this.absoluteMazeSize);
   }
 
   drawCell(x_: number, y_: number, cell: Cell) {
     const ctx: CanvasRenderingContext2D = this.canvas.nativeElement.getContext('2d');
 
-    const width = this.cellSize.width,
-      height = this.cellSize.height;
-    const x = x_ * width, y = y_ * height;
-    ctx.beginPath();
+    const size = this.cellSize;
+    const x = x_ * size, y = y_ * size;
 
     /*
     While erasing the borders, let the corners be there
     */
 
     // Fill with black
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(x, y, width, height);
+    ctx.fillStyle = COLOR_BLACK;
+    ctx.fillRect(x, y, size, size);
     // Remove inner
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(x + this.wallSize, y + this.wallSize, width - (2 * this.wallSize), height - (2 * this.wallSize));
+    ctx.fillStyle = COLOR_WHITE;
+    ctx.fillRect(x + this.wallSize, y + this.wallSize, size - (2 * this.wallSize), size - (2 * this.wallSize));
 
     // Remove if not present
 
     // North Wall
     if (!cell.walls[0]) {
-      ctx.fillRect(x + this.wallSize, y, width - (2 * this.wallSize), this.wallSize);
+      ctx.fillRect(x + this.wallSize, y, size - (2 * this.wallSize), this.wallSize);
     }
     // South Wall
     if (!cell.walls[2]) {
-      ctx.fillRect(x + this.wallSize, y + height - this.wallSize, width - (2 * this.wallSize), this.wallSize);
+      ctx.fillRect(x + this.wallSize, y + size - this.wallSize, size - (2 * this.wallSize), this.wallSize);
     }
     // East
     if (!cell.walls[1]) {
-      ctx.fillRect(x + width - this.wallSize, y + this.wallSize, this.wallSize, height - (2 * this.wallSize));
+      ctx.fillRect(x + size - this.wallSize, y + this.wallSize, this.wallSize, size - (2 * this.wallSize));
     }
     // West
     if (!cell.walls[3]) {
-      ctx.fillRect(x, y + this.wallSize, this.wallSize, height - (2 * this.wallSize));
+      ctx.fillRect(x, y + this.wallSize, this.wallSize, size - (2 * this.wallSize));
     }
   }
 }

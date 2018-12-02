@@ -1,8 +1,9 @@
 <div id="nav">
-    <button #start (click)="redraw()">Start</button>
+    <button (click)="redraw()">Redraw</button>
+    <button (click)="clearMaze()" >Clear</button>
 </div>
 <div>
-    <canvas #maze [height]="mazeSize.height" [width]="mazeSize.width">
+    <canvas #maze height="1000" width="1000">
         Browser doesn't support canvas!
     </canvas>
 </div>
