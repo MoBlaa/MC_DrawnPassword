@@ -1,6 +1,9 @@
 <div id="nav">
     <button (click)="redraw()">Redraw</button>
     <button (click)="clearMaze()" >Clear</button>
+    <span class="separator"></span>
+    <button (click)="start()">Start Game</button>
+    <button (click)="stop()">Stop Game</button>
 </div>
 <div>
     <canvas #maze height="1000" width="1000">
