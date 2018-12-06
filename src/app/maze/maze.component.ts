@@ -1,9 +1,23 @@
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
-import { ICell, MazeService, Coordinates, IWall, IWallEvent, WallEventType } from '../maze.service';
+import { MazeService, IWallEvent, WallEventType } from '../maze.service';
 import { CheckType } from '@angular/core/src/view';
+import { Coordinates, Dimensions, IWall, ICell } from '../maze';
+import { preserveWhitespacesDefault } from '@angular/compiler';
 
-const COLOR_WHITE = '#ffffff',
-  COLOR_BLACK = '#000000';
+const COLOR_WHITE = '#ffffff', COLOR_BLACK = '#000000';
+
+interface IDrawnWall {
+  firstCell: Coordinates;
+  secondCell: Coordinates;
+}
+
+enum MazeWalls {
+  NORTH, EAST, SOUTH, WEST
+}
+
+interface IBrick extends Coordinates {
+  index: number;
+}
 
 // TODO: Quadratic everytime and centering
 
@@ -30,34 +44,15 @@ export class MazeComponent implements OnInit {
     this.wallSize = 5;
   }
 
-  cellUpdater() {
-    return {
-      next: (cellCord: IWallEvent) => {
-        switch (cellCord.type) {
-          case WallEventType.ADD: {
-            this.addWall(cellCord);
-            break;
-          }
-          case WallEventType.REMOVE: {
-            this.removeWall(cellCord);
-          }
-        }
-      },
-      complete: this.optimizeWalls
-    };
-  }
-
   // Optimiert die Wände des Labyrints, sodass aneinanderliegende miteinander verbunden werden => schnellere Überprüfung
   optimizeWalls() {
     console.log('Optimizing the walls! - hypothetically');
   }
 
-  addWall(cord: IWallEvent) {
-    console.log('Adding wall! - hypothetically');
-  }
-
-  removeWall(cord: IWallEvent) {
-    console.log('Removing wall! - hypothetically');
+  drawRect(cord: Dimensions, color: string) {
+    const context: CanvasRenderingContext2D = this.canvas.nativeElement.getContext('2d');
+    context.fillStyle = color;
+    context.fillRect(cord.x, cord.y, cord.width, cord.height);
   }
 
   ngOnInit() {
@@ -67,10 +62,51 @@ export class MazeComponent implements OnInit {
     this.redraw();
   }
 
+  drawNorthWallOf(cell: ICell, color: string) {
+    // Cell gives the relative cell inside the maze (x = column, y = row)
+    console.log(`Drawing north Wall of Cell x=${cell.x}, y=${cell.y} - hypothetically`);
+    const wallDimensions = {
+      x: cell.x * this.cellSize + this.wallSize,
+      y: cell.y * this.cellSize + this.wallSize,
+      width: this.cellSize + 2 * this.wallSize,
+      height: this.wallSize
+    };
+    this.drawRect(wallDimensions, color);
+  }
+
+  drawEastWallOf(cell: ICell, color: string) {
+    console.log(`Drawing east Wall of Cell x=${cell.x}, y=${cell.y} - hypothetically`);
+    this.drawWestWallOf({...cell, x: cell.x + 1}, color);
+  }
+
+  drawSouthWallOf(cell: ICell, color: string) {
+    console.log(`Drawing south Wall of Cell x=${cell.x}, y=${cell.y} - hypothetically`);
+    this.drawNorthWallOf({...cell, y: cell.y + 1}, color);
+  }
+
+  drawWestWallOf(cell: ICell, color: string) {
+    console.log(`Drawing west Wall of Cell x=${cell.x}, y=${cell.y} - hypothetically`);
+    const wallDimensions = {
+      x: cell.x * (this.cellSize + 1),
+      y: cell.y * this.cellSize + this.wallSize,
+      width: this.cellSize + 2 * this.wallSize,
+      height: this.wallSize
+    };
+    this.drawRect(wallDimensions, color);
+  }
+
   clearMaze(): void {
     const context: CanvasRenderingContext2D = this.canvas.nativeElement.getContext('2d');
     context.fillStyle = COLOR_WHITE;
     context.fillRect(0, 0, this.absoluteMazeSize, this.absoluteMazeSize);
+
+    // Draw Walls around the maze
+    const north = { x: 0, y: 0, width: this.absoluteMazeSize, height: this.wallSize };
+    const south = { x: 0, y: this.absoluteMazeSize - this.wallSize, width: this.absoluteMazeSize, height: this.wallSize };
+    const west = { x: 0, y: 0, width: this.wallSize, height: this.absoluteMazeSize };
+    const east = { x: this.absoluteMazeSize - this.wallSize, y: 0, width: this.wallSize, height: this.absoluteMazeSize };
+
+    [north, south, west, east].forEach(wall => this.drawRect(wall, COLOR_BLACK));
   }
 
   // should only clear the canvas and draw a new maze by instruction of the service
@@ -80,13 +116,29 @@ export class MazeComponent implements OnInit {
 
     // Draw new Maze
     this.service.generateMaze(this.mazeSize)
-      .subscribe(this.cellUpdater());
+      .subscribe({
+        next: (cellCord: IWallEvent) => {
+          // Handle next wall added or removed
+          switch (cellCord.type) {
+            case WallEventType.ADD: {
+              // TODO: Get if noth, south, east or west and draw it
+              this.drawWall(cellCord.wall);
+              break;
+            }
+            case WallEventType.REMOVE: {
+              this.eraseWall(cellCord.wall);
+            }
+          }
+        },
+        // Handle maze generation finished
+        complete: this.optimizeWalls
+      });
   }
 
   setAbsoluteMazeSize(absSize: number): void {
     this.clearMaze();
     this.absoluteMazeSize = ((absSize) - (absSize % this.mazeSize));
-    this.cellSize = this.absoluteMazeSize / this.mazeSize;
+    this.cellSize = this.absoluteMazeSize / this.mazeSize - this.wallSize;
     console.log(`Updating size - abs=${this.absoluteMazeSize}px, rel:${this.mazeSize} Cells`);
   }
 
