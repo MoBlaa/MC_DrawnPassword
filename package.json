@@ -7,7 +7,10 @@
     "build": "ng build",
     "test": "ng test",
     "lint": "ng lint",
-    "e2e": "ng e2e"
+    "e2e": "ng e2e",
+    "phaser:get": "curl -o src/phaser.d.ts https://raw.githubusercontent.com/photonstorm/phaser3-docs/master/typescript/phaser.d.ts",
+    "postinstall": "npm run phaser:get",
+    "prod:build": "ng build --prod"
   },
   "private": true,
   "dependencies": {
@@ -22,6 +25,8 @@
     "@angular/router": "~7.0.0",
     "amazejs": "^1.0.2",
     "core-js": "^2.5.4",
+    "phaser": "^3.15.1",
+    "phaser-component-library": "^2.0.0",
     "rxjs": "~6.3.3",
     "zone.js": "~0.8.26"
   },

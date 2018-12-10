@@ -1,20 +1,19 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 
-import { AppRoutingModule } from './app-routing.module';
+import { PhaserModule } from 'phaser-component-library';
+
 import { AppComponent } from './app.component';
-import { DrawnPasswordComponent } from './drawn-password/drawn-password.component';
 import { MazeComponent } from './maze/maze.component';
 
 @NgModule({
   declarations: [
     AppComponent,
-    DrawnPasswordComponent,
     MazeComponent
   ],
   imports: [
     BrowserModule,
-    AppRoutingModule
+    PhaserModule
   ],
   providers: [],
   bootstrap: [AppComponent]
