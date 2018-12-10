@@ -1,8 +1,9 @@
-import { Injectable, Renderer2 } from '@angular/core';
+import { Injectable, Renderer2, ApplicationRef } from '@angular/core';
 import { MazeService } from './maze.service';
 import { IWall, ICell, Wall } from './maze';
 import { Observable, of } from 'rxjs';
 import { delay, timeout, mergeAll } from 'rxjs/operators';
+import { stringify } from '@angular/compiler/src/util';
 
 const TOLERANCE = 2;
 
@@ -25,6 +26,7 @@ export class SceneService extends Phaser.Scene {
   direction: [boolean, boolean, boolean, boolean];
 
   platforms: Phaser.Physics.Arcade.StaticGroup;
+  platformsWithCords: Map<string, any>;
 
   player: Phaser.Physics.Arcade.Sprite;
 
@@ -41,10 +43,12 @@ export class SceneService extends Phaser.Scene {
 
   constructor(
     private renderer: Renderer2,
-    private mazeService: MazeService
+    private mazeService: MazeService,
+    private application: ApplicationRef
   ) {
     super({ key: 'Scene' });
     this.direction = [false, false, false, false];
+    this.platformsWithCords = new Map<string, any>();
 
     this.handleOrientation = this.handleOrientation.bind(this);
 
@@ -65,11 +69,11 @@ export class SceneService extends Phaser.Scene {
     this.platforms = this.physics.add.staticGroup();
 
     //// Create the player
-    this.player = this.physics.add.sprite(window.innerWidth / 2, window.innerHeight / 3, 'dude');
-    this.player.setDisplaySize(14, 14);
+    this.player = this.physics.add.sprite(16, 24, 'dude');
+    this.player.setDisplaySize(this.cellSize / 2, this.cellSize / 2);
 
     // It should bounce and onle be in the world
-    // this.player.setBounce(0.3);
+    this.player.setBounce(0.3);
     this.player.setCollideWorldBounds(true);
 
     // It should bounce from the platforms
@@ -79,17 +83,9 @@ export class SceneService extends Phaser.Scene {
     this.cursors = this.input.keyboard.createCursorKeys();
 
     //// Generate Maze to add
-    const walls: Array<IWall> = [];
-    this.mazeService.generateMaze(this.mazeSize).subscribe({
-      next: (wall) => walls.push(wall),
-      complete: () => {
-        const obss: Array<Observable<IWall>> = [];
-        for (let i = 0; i < walls.length; i++) {
-          const wall = walls[i];
-          obss.push(of(wall).pipe(delay(i * 10)));
-        }
-        of(obss).pipe(mergeAll()).subscribe((obsWall) => obsWall.subscribe((wall => this.setWall(wall))));
-      }
+    this.mazeService.generateMaze(this.mazeSize)
+    .subscribe({
+      next: (wall) => this.setWall(wall)
     });
   }
 
@@ -118,35 +114,30 @@ export class SceneService extends Phaser.Scene {
 
   //// Set or unset the given wall depending on its 'present' attribute
   public setWall(wall: IWall) {
-    if (wall.present) {
-      const cellOne = wall.cellOne, cellTwo = wall.cellTwo;
+    const cellOne = wall.cellOne, cellTwo = wall.cellTwo;
 
-      if (cellOne.x < cellTwo.x) {
-        // Draw right wall
-        this.createWallOf(cellOne, Direction.RIGHT);
-      } else if (cellOne.x > cellTwo.x) {
-        // Draw left wall
-        this.createWallOf(cellOne, Direction.LEFT);
-      } else {
-        // Top or Bottom wall
-        if (cellOne.y < cellTwo.y) {
-          // Bottom of cellOne
-          this.createWallOf(cellOne, Direction.BOTTOM);
-        } else if (cellOne.y > cellTwo.y) {
-          // Top of cellOne
-          this.createWallOf(cellOne, Direction.TOP);
-        } else {
-          console.error(`Tried to add a wall between the same cell: x=${cellOne.x}, y=${cellOne.y}`);
-        }
-      }
+    if (cellOne.x < cellTwo.x) {
+      // Draw right wall
+      this.setWallOf(cellOne, Direction.RIGHT, wall.present);
+    } else if (cellOne.x > cellTwo.x) {
+      // Draw left wall
+      this.setWallOf(cellOne, Direction.LEFT, wall.present);
     } else {
-      // Remove Wall
-
+      // Top or Bottom wall
+      if (cellOne.y < cellTwo.y) {
+        // Bottom of cellOne
+        this.setWallOf(cellOne, Direction.BOTTOM, wall.present);
+      } else if (cellOne.y > cellTwo.y) {
+        // Top of cellOne
+        this.setWallOf(cellOne, Direction.TOP, wall.present);
+      } else {
+        console.error(`Tried to add a wall between the same cell: x=${cellOne.x}, y=${cellOne.y}`);
+      }
     }
   }
 
   //// Create Wall of a cell in the given direction
-  createWallOf(cell: ICell, direction: Direction) {
+  setWallOf(cell: ICell, direction: Direction, present: boolean) {
     const relX = cell.x, relY = cell.y;
 
     let orientation: Orientation;
@@ -169,8 +160,25 @@ export class SceneService extends Phaser.Scene {
         break;
       }
     }
-    console.log(`Adding wall @ { x:${relX}, y:${relY} }`);
-    this.createPlatform(x, y, orientation);
+    if (present) {
+      console.log(`Adding wall @ { x:${relX}, y:${relY} }`);
+      this.createPlatform(x, y, orientation);
+    } else {
+      console.log(`Remove wall @ { x:${relX}, y:${relY} }`);
+      this.removePlatform(x, y);
+    }
+  }
+
+  private removePlatform(absX: number, absY: number) {
+    const key = `${absX},${absY}`;
+    const platform = this.platformsWithCords.get(key);
+
+    if (platform !== undefined) {
+      platform.destroy();
+      this.platformsWithCords.delete(key);
+    } else {
+      console.error(`Failed to remove { x: ${absX}, y: ${absY}}`);
+    }
   }
 
   //// Creates a platform which's center is at absolute coordinates (absX, absY) with given orientation.
@@ -190,6 +198,7 @@ export class SceneService extends Phaser.Scene {
     }
 
     platform.refreshBody();
+    this.platformsWithCords.set(`${absX},${absY}`, platform);
   }
 
   public move(direction: Direction | None) {

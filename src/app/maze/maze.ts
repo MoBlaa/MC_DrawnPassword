@@ -1,4 +1,5 @@
-import { Observable } from 'rxjs';
+import { Observable, Subscriber } from 'rxjs';
+import { stringify } from '@angular/compiler/src/util';
 
 export enum Orientation {
     HORIZONTAL, VERTICAL
@@ -54,27 +55,34 @@ export interface Dimensions extends Coordinates {
 }
 
 export interface ICell extends Coordinates {
-    set: Set<ICell>;
+    set: string;
     visited: boolean;
 }
 
 export class Cell implements ICell {
-    public set: Set<ICell>;
+    public set: string;
     readonly visited: boolean;
 
     constructor(
         readonly x: number,
         readonly y: number,
-        set = new Set(),
+        set = `${x}:${y}`,
         visited = false
     ) {
         this.set = set;
         this.visited = visited;
     }
+
+    toString(): string {
+        return `${this.x}:${this.y}`;
+    }
 }
 
 export class Maze {
     readonly walls: Map<string, Map<string, IWall>>;
+
+    wallCount = 0;
+
     readonly cells: Map<number, Map<number, ICell>>;
     readonly size: number;
 
@@ -84,40 +92,38 @@ export class Maze {
         this.cells = new Map();
     }
 
-    public init(): Observable<IWall> {
-        return new Observable((observer) => {
-            // Init cells and walls
-            for (let x = 0; x < this.size; x++) {
-                this.cells[x] = new Map();
-                for (let y = 0; y < this.size; y++) {
-                    // Add cell
-                    const cell = new Cell(x, y);
-                    this.cells[x][y] = cell;
+    public init(observer: Subscriber<IWall>) {
+        // Init cells and walls
+        for (let x = 0; x < this.size; x++) {
+            this.cells.set(x, new Map());
+            for (let y = 0; y < this.size; y++) {
+                // Add cell
+                const cell = new Cell(x, y);
+                this.cells.get(x).set(y, cell);
 
-                    //// Add wall function
-                    const addWall = (cordCells: [Cell, Cell]) => {
-                        const cords = [toKey(cordCells[0]), toKey(cordCells[1])];
-                        if (!this.walls.hasOwnProperty(cords[0]) || this.walls[cords[0]] == null) {
-                            this.walls[cords[0]] = new Map();
-                        }
-                        const addedWall = new Wall(cordCells[0], cordCells[1]);
-                        this.walls[cords[0]][cords[1]] = addedWall;
-                        observer.next(addedWall);
-                    };
+                //// Add wall function
+                const addWall = (cordCells: [Cell, Cell]) => {
+                    const cords = [toKey(cordCells[0]), toKey(cordCells[1])];
+                    if (!this.walls.has(cords[0]) || this.walls.get(cords[0]) == null) {
+                        this.walls.set(cords[0], new Map());
+                    }
+                    const addedWall = new Wall(cordCells[0], cordCells[1]);
+                    this.walls.get(cords[0]).set(cords[1], addedWall);
+                    this.wallCount++;
+                    observer.next(addedWall);
+                };
 
-                    // Add Walls to entries before
-                    if (x > 0) {
-                        const cellWest = this.cells[x - 1][y];
-                        addWall([cell, cellWest]);
-                    }
-                    if (y > 0) {
-                        const cellNorth = this.cells[x][y - 1];
-                        addWall([cell, cellNorth]);
-                    }
+                // Add Walls to entries before
+                if (x > 0) {
+                    const cellWest = this.cells.get(x - 1).get(y);
+                    addWall([cell, cellWest]);
+                }
+                if (y > 0) {
+                    const cellNorth = this.cells.get(x).get(y - 1);
+                    addWall([cell, cellNorth]);
                 }
             }
-            observer.complete();
-        });
+        }
     }
 
     private existsWall([keyOne, keyTwo]: [string, string]): boolean {
@@ -128,9 +134,9 @@ export class Maze {
     removeWall(wall: IWall) {
         const [keyOne, keyTwo] = toKeys(wall);
         if (this.walls.hasOwnProperty(keyOne) && this.walls[keyOne].hasOwnProperty(keyTwo)) {
-            delete this.walls[keyOne][keyTwo];
+            this.walls.get(keyOne).delete(keyTwo);
         } else if (this.walls.hasOwnProperty(keyTwo) != null && this.walls[keyTwo].hasOwnProperty(keyOne)) {
-            delete this.walls[keyTwo][keyOne];
+            this.walls.get(keyTwo).delete(keyOne);
         }
     }
 
@@ -141,12 +147,9 @@ export class Maze {
     getWallsRandomOrdered(): Array<IWall> {
         const rWalls: Array<IWall> = [];
         // Add all walls
-        for (let x = 1; x < this.size; x++) {
-            for (let y = 1; y < this.size; y++) {
-                const cellCords = toKey({ x, y });
-                const wallsOfCell: Map<string, IWall> = this.walls[cellCords];
-
-                wallsOfCell.forEach((value: IWall) => rWalls.push(value));
+        for (const first of this.walls.values()) {
+            for (const wall of first.values()) {
+                rWalls.push(wall);
             }
         }
 
@@ -158,8 +161,19 @@ export class Maze {
         return rWalls;
     }
 
-    // Converts this maze to Blocks for easier collision detection
-    toBlocks(): Array<Dimensions> {
-        return [];
+    public getWalls(): Array<IWall> {
+        const walls: Array<IWall> = [];
+        this.walls.forEach((value) => {
+            value.forEach(wall => walls.push(wall));
+        });
+        return walls;
+    }
+
+    public getCells(): Array<ICell> {
+        const cells: Array<ICell> = [];
+        this.cells.forEach((value) => {
+            value.forEach(cell => cells.push(cell));
+        });
+        return cells;
     }
 }

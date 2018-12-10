@@ -20,11 +20,11 @@ export class MazeComponent {
     type: Phaser.AUTO,
     width: window.innerWidth,
     height: window.innerWidth,
-    backgroundColor: '#ffffff', // White background
+    backgroundColor: '#ffffff',
     physics: {
       default: 'arcade',
       arcade: {
-        gravity: { z: 200, y: 0, x: 0 }
+        gravity: { y: -200}
       }
     }
   };
