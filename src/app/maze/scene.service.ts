@@ -69,7 +69,7 @@ export class SceneService extends Phaser.Scene {
     this.player.setDisplaySize(14, 14);
 
     // It should bounce and onle be in the world
-    this.player.setBounce(0.3);
+    // this.player.setBounce(0.3);
     this.player.setCollideWorldBounds(true);
 
     // It should bounce from the platforms
@@ -141,7 +141,7 @@ export class SceneService extends Phaser.Scene {
       }
     } else {
       // Remove Wall
-      
+
     }
   }
 

@@ -24,7 +24,7 @@ export class MazeComponent {
     physics: {
       default: 'arcade',
       arcade: {
-        gravity: { z: 200 }
+        gravity: { z: 200, y: 0, x: 0 }
       }
     }
   };
