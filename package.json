@@ -10,7 +10,8 @@
     "e2e": "ng e2e",
     "phaser:get": "curl -o src/phaser.d.ts https://raw.githubusercontent.com/photonstorm/phaser3-docs/master/typescript/phaser.d.ts",
     "postinstall": "npm run phaser:get",
-    "prod:build": "ng build --prod"
+    "prod:build": "ng build --prod",
+    "prod:deploy": "ng build --prod --base-href 'https://moblaa.github.io/MC_DrawnPassword/' && ngh --dir=dist/DrawnPassword"
   },
   "private": true,
   "dependencies": {
@@ -35,9 +36,10 @@
     "@angular/cli": "~7.0.3",
     "@angular/compiler-cli": "~7.0.0",
     "@angular/language-service": "~7.0.0",
-    "@types/node": "~8.9.4",
     "@types/jasmine": "~2.8.8",
     "@types/jasminewd2": "~2.0.3",
+    "@types/node": "~8.9.4",
+    "angular-cli-ghpages": "^0.5.3",
     "codelyzer": "~4.5.0",
     "jasmine-core": "~2.99.1",
     "jasmine-spec-reporter": "~4.2.1",

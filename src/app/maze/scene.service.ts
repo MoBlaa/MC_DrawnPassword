@@ -43,8 +43,7 @@ export class SceneService extends Phaser.Scene {
 
   constructor(
     private renderer: Renderer2,
-    private mazeService: MazeService,
-    private application: ApplicationRef
+    private mazeService: MazeService
   ) {
     super({ key: 'Scene' });
     this.direction = [false, false, false, false];
