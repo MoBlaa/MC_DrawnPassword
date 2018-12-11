@@ -2,7 +2,7 @@ import { Injectable, Renderer2, ApplicationRef } from '@angular/core';
 import { MazeService } from './maze.service';
 import { IWall, ICell } from './maze';
 
-const TOLERANCE = 3;
+const MAX_SPEED = 5;
 
 export enum Direction {
   TOP, BOTTOM, LEFT, RIGHT
@@ -34,9 +34,9 @@ export class SceneService extends Phaser.Scene {
   width: number = window.innerWidth;
   height: number = window.innerWidth;
 
-  mazeSize = 10;
-  cellSize: number = this.width / this.mazeSize;
-  wallSize = this.cellSize / 10;
+  mazeSize = 20;
+  cellSize: number = Math.floor(this.width / this.mazeSize);
+  wallSize = Math.floor(this.cellSize / 4);
 
   constructor(
     private renderer: Renderer2,
@@ -62,9 +62,10 @@ export class SceneService extends Phaser.Scene {
 
     //// Create the player
     this.player = this.physics.add.sprite(16, 16, 'ball');
-    this.player.setDisplaySize(this.cellSize / 4, this.cellSize / 4);
+    this.player.setDisplaySize(this.cellSize / 3, this.cellSize / 3);
 
     // It should bounce and onle be in the world
+    // this.player.setBounce(1);
     this.player.setCollideWorldBounds(true);
 
     // It should bounce from the platforms
@@ -176,11 +177,11 @@ export class SceneService extends Phaser.Scene {
 
     switch (orientation) {
       case Orientation.HORIZONTAL: {
-        platform.setDisplaySize(this.cellSize + this.wallSize, this.wallSize);
+        platform.setDisplaySize(this.cellSize, this.wallSize);
         break;
       }
       case Orientation.VERTICAL: {
-        platform.setDisplaySize(this.wallSize, this.cellSize + this.wallSize);
+        platform.setDisplaySize(this.wallSize - 1, Math.floor(this.cellSize + this.wallSize));
         break;
       }
     }
@@ -192,19 +193,19 @@ export class SceneService extends Phaser.Scene {
   public move(direction: Direction | None) {
     switch (direction) {
       case Direction.TOP: {
-        this.player.setVelocityY(-160);
+        this.player.setVelocityY(this.motionY);
         break;
       }
       case Direction.RIGHT: {
-        this.player.setVelocityX(160);
+        this.player.setVelocityX(this.motionX);
         break;
       }
       case Direction.BOTTOM: {
-        this.player.setVelocityY(160);
+        this.player.setVelocityY(this.motionY);
         break;
       }
       case Direction.LEFT: {
-        this.player.setVelocityX(-160);
+        this.player.setVelocityX(this.motionX);
         break;
       }
       case None.X: {
@@ -220,23 +221,27 @@ export class SceneService extends Phaser.Scene {
 
   // Handle orientation
   public handleOrientation(event: DeviceOrientationEvent) {
-    const x = event.gamma;
-    const y = event.beta;
+    const x = Math.floor(event.gamma * 10);
+    const y = Math.floor(event.beta * 10);
 
-    if (x > TOLERANCE) {
-      this.motionX = 1;
-    } else if (x < -TOLERANCE) {
-      this.motionX = -1;
+    if (x < MAX_SPEED || x > -MAX_SPEED) {
+      this.motionX = x;
     } else {
-      this.motionX = 0;
+      if (x > 0) {
+        this.motionX = MAX_SPEED;
+      } else {
+        this.motionX = -MAX_SPEED;
+      }
     }
 
-    if (y > TOLERANCE) {
-      this.motionY = 1;
-    } else if (y < -TOLERANCE) {
-      this.motionY = -1;
+    if (y < MAX_SPEED || x > -MAX_SPEED) {
+      this.motionY = y;
     } else {
-      this.motionY = 0;
+      if (y > 0) {
+        this.motionY = MAX_SPEED;
+      } else {
+        this.motionY = -MAX_SPEED;
+      }
     }
   }
 }

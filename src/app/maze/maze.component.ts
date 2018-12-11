@@ -1,7 +1,6 @@
 import { Component } from '@angular/core';
 import { SceneService } from './scene.service';
 import { environment } from 'src/environments/environment';
-import { MazeService } from './maze.service';
 
 @Component({
   selector: 'app-maze',
@@ -22,7 +21,8 @@ export class MazeComponent {
     physics: {
       default: 'arcade',
       arcade: {
-        gravity: { z: 200, y: 0 }
+        gravity: 50,
+        maxVelocity: 80
       }
     }
   };
