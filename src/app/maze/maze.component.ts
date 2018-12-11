@@ -3,8 +3,6 @@ import { SceneService } from './scene.service';
 import { environment } from 'src/environments/environment';
 import { MazeService } from './maze.service';
 
-// TODO: Quadratic everytime and centering
-
 @Component({
   selector: 'app-maze',
   template: `<phaser-component [gameConfig]="gameConfig" (gameReady)="onGameReady($event)" [Phaser]="phaser"></phaser-component>`,
@@ -24,7 +22,7 @@ export class MazeComponent {
     physics: {
       default: 'arcade',
       arcade: {
-        gravity: { y: -200}
+        gravity: { z: 200, y: 0 }
       }
     }
   };
@@ -32,8 +30,7 @@ export class MazeComponent {
   public readonly phaser = Phaser;
 
   public constructor(
-    public sceneService: SceneService,
-    public mazeService: MazeService
+    public sceneService: SceneService
     ) { }
 
   public onGameReady(game: Phaser.Game): void {

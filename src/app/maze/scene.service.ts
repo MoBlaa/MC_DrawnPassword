@@ -1,18 +1,15 @@
 import { Injectable, Renderer2, ApplicationRef } from '@angular/core';
 import { MazeService } from './maze.service';
-import { IWall, ICell, Wall } from './maze';
-import { Observable, of } from 'rxjs';
-import { delay, timeout, mergeAll } from 'rxjs/operators';
-import { stringify } from '@angular/compiler/src/util';
+import { IWall, ICell } from './maze';
 
-const TOLERANCE = 2;
+const TOLERANCE = 3;
 
 export enum Direction {
   TOP, BOTTOM, LEFT, RIGHT
 }
 
 export enum None {
-  X, Y
+  X = 4, Y = 5
 }
 
 enum Orientation {
@@ -23,7 +20,6 @@ enum Orientation {
   providedIn: 'root'
 })
 export class SceneService extends Phaser.Scene {
-  direction: [boolean, boolean, boolean, boolean];
 
   platforms: Phaser.Physics.Arcade.StaticGroup;
   platformsWithCords: Map<string, any>;
@@ -40,13 +36,13 @@ export class SceneService extends Phaser.Scene {
 
   mazeSize = 10;
   cellSize: number = this.width / this.mazeSize;
+  wallSize = this.cellSize / 10;
 
   constructor(
     private renderer: Renderer2,
     private mazeService: MazeService
   ) {
     super({ key: 'Scene' });
-    this.direction = [false, false, false, false];
     this.platformsWithCords = new Map<string, any>();
 
     this.handleOrientation = this.handleOrientation.bind(this);
@@ -57,10 +53,7 @@ export class SceneService extends Phaser.Scene {
   public preload(): void {
     // Preload some assets
     this.load.image('ground', 'assets/platform.png');
-    this.load.spritesheet('dude',
-      'assets/dude.png',
-      { frameWidth: 32, frameHeight: 48 }
-    );
+    this.load.image('ball', 'assets/melon.png');
   }
 
   public create(): void {
@@ -68,11 +61,10 @@ export class SceneService extends Phaser.Scene {
     this.platforms = this.physics.add.staticGroup();
 
     //// Create the player
-    this.player = this.physics.add.sprite(16, 24, 'dude');
-    this.player.setDisplaySize(this.cellSize / 2, this.cellSize / 2);
+    this.player = this.physics.add.sprite(16, 16, 'ball');
+    this.player.setDisplaySize(this.cellSize / 4, this.cellSize / 4);
 
     // It should bounce and onle be in the world
-    this.player.setBounce(0.3);
     this.player.setCollideWorldBounds(true);
 
     // It should bounce from the platforms
@@ -104,10 +96,6 @@ export class SceneService extends Phaser.Scene {
       this.move(Direction.BOTTOM);
     } else {
       this.move(None.Y);
-    }
-
-    if (this.cursors.up.isDown && this.player.body.touching.down) {
-      this.player.setVelocityY(-330);
     }
   }
 
@@ -173,6 +161,7 @@ export class SceneService extends Phaser.Scene {
     const platform = this.platformsWithCords.get(key);
 
     if (platform !== undefined) {
+      this.platforms.remove(platform);
       platform.destroy();
       this.platformsWithCords.delete(key);
     } else {
@@ -187,11 +176,11 @@ export class SceneService extends Phaser.Scene {
 
     switch (orientation) {
       case Orientation.HORIZONTAL: {
-        platform.setDisplaySize(this.cellSize, 2);
+        platform.setDisplaySize(this.cellSize + this.wallSize, this.wallSize);
         break;
       }
       case Orientation.VERTICAL: {
-        platform.setDisplaySize(2, this.cellSize);
+        platform.setDisplaySize(this.wallSize, this.cellSize + this.wallSize);
         break;
       }
     }
