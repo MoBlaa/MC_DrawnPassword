@@ -61,7 +61,7 @@ export class SceneService extends Phaser.Scene {
     this.platforms = this.physics.add.staticGroup();
 
     //// Create the player
-    this.player = this.physics.add.sprite(16, 16, 'ball');
+    this.player = this.physics.add.sprite(20, 20, 'ball');
     this.player.setDisplaySize(this.cellSize / 3, this.cellSize / 3);
 
     // It should bounce and onle be in the world
@@ -181,7 +181,7 @@ export class SceneService extends Phaser.Scene {
         break;
       }
       case Orientation.VERTICAL: {
-        platform.setDisplaySize(this.wallSize - 1, Math.floor(this.cellSize + this.wallSize));
+        platform.setDisplaySize(this.wallSize, Math.floor(this.cellSize + this.wallSize));
         break;
       }
     }
