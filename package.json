@@ -26,6 +26,7 @@
     "@angular/router": "~7.0.0",
     "amazejs": "^1.0.2",
     "core-js": "^2.5.4",
+    "ngx-device-detector": "^1.3.5",
     "phaser": "^3.15.1",
     "phaser-component-library": "^2.0.0",
     "rxjs": "~6.3.3",

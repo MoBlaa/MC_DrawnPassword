@@ -1,8 +1,14 @@
 import { Injectable, Renderer2, ApplicationRef } from '@angular/core';
 import { MazeService } from './maze.service';
 import { IWall, ICell } from './maze';
+import { TouchSequence } from 'selenium-webdriver';
+import { DeviceDetectorService } from 'ngx-device-detector';
+import { areAllEquivalent } from '@angular/compiler/src/output/output_ast';
 
-const MAX_SPEED = 5;
+const MAX_SPEED = 160;
+
+const COLOR_GREEN = 0x00AA00;
+const COLOR_RED = 0xAA0000;
 
 export enum Direction {
   TOP, BOTTOM, LEFT, RIGHT
@@ -34,13 +40,18 @@ export class SceneService extends Phaser.Scene {
   width: number = window.innerWidth;
   height: number = window.innerWidth;
 
-  mazeSize = 20;
+  mazeSize = 10;
   cellSize: number = Math.floor(this.width / this.mazeSize);
   wallSize = Math.floor(this.cellSize / 4);
 
+  end: { draw: () => void, create: () => any };
+
+  areas: Phaser.Physics.Arcade.StaticGroup;
+
   constructor(
     private renderer: Renderer2,
-    private mazeService: MazeService
+    private mazeService: MazeService,
+    private deviceService: DeviceDetectorService
   ) {
     super({ key: 'Scene' });
     this.platformsWithCords = new Map<string, any>();
@@ -59,9 +70,10 @@ export class SceneService extends Phaser.Scene {
   public create(): void {
     // Initialize the platforms
     this.platforms = this.physics.add.staticGroup();
+    this.areas = this.physics.add.staticGroup();
 
     //// Create the player
-    this.player = this.physics.add.sprite(20, 20, 'ball');
+    this.player = this.physics.add.sprite(this.cellSize / 2, this.cellSize / 2, 'ball');
     this.player.setDisplaySize(this.cellSize / 3, this.cellSize / 3);
 
     // It should bounce and onle be in the world
@@ -74,11 +86,23 @@ export class SceneService extends Phaser.Scene {
     //// Some controls
     this.cursors = this.input.keyboard.createCursorKeys();
 
+    //// Start & End-Area
+    this.createArea(0, 0, this.cellSize + this.wallSize / 2, this.cellSize + this.wallSize / 2, COLOR_RED).draw();
+    this.end = this.createArea(
+      (this.mazeSize - 1) * this.cellSize - this.wallSize / 2,
+      (this.mazeSize - 1) * this.cellSize - this.wallSize / 2,
+      this.cellSize + this.wallSize,
+      this.cellSize + this.wallSize,
+      COLOR_GREEN
+    );
+    this.end.create();
+    this.physics.add.overlap(this.areas, this.player, this.finish, null, this);
+
     //// Generate Maze to add
     this.mazeService.generateMaze(this.mazeSize)
-    .subscribe({
-      next: (wall) => this.setWall(wall)
-    });
+      .subscribe({
+        next: (wall) => this.setWall(wall)
+      });
   }
 
   public update() {
@@ -98,6 +122,36 @@ export class SceneService extends Phaser.Scene {
     } else {
       this.move(None.Y);
     }
+  }
+
+  private finish() {
+    console.log('Reached the end');
+  }
+
+  private createArea(x: number, y: number, width: number, height: number, color: number): { draw: () => void, create: () => any } {
+    const draw = () => {
+      const rect = new Phaser.Geom.Rectangle(x, y, width, height);
+      const graphic = this.add.graphics({
+        fillStyle: {
+          color,
+          alpha: .4
+        }
+      });
+      graphic.alpha.toFixed(0.5);
+      graphic.fillRectShape(rect);
+    };
+    const create = () => {
+      const area = this.areas.create(x + width / 2, y + height / 2, null, null, false);
+      area.setDisplaySize(width, height);
+    };
+
+    return {
+      draw,
+      create: () => {
+        draw();
+        create();
+      }
+    };
   }
 
   //// Set or unset the given wall depending on its 'present' attribute
@@ -181,7 +235,7 @@ export class SceneService extends Phaser.Scene {
         break;
       }
       case Orientation.VERTICAL: {
-        platform.setDisplaySize(this.wallSize, Math.floor(this.cellSize + this.wallSize));
+        platform.setDisplaySize(this.wallSize, this.cellSize + this.wallSize);
         break;
       }
     }
@@ -191,6 +245,43 @@ export class SceneService extends Phaser.Scene {
   }
 
   public move(direction: Direction | None) {
+    if (this.deviceService.isDesktop()) {
+      this.moveByDefault(direction);
+    } else {
+      this.moveByOrientation(direction);
+    }
+  }
+
+  public moveByDefault(direction: Direction | None) {
+    switch (direction) {
+      case Direction.TOP: {
+        this.player.setVelocityY(-MAX_SPEED);
+        break;
+      }
+      case Direction.RIGHT: {
+        this.player.setVelocityX(MAX_SPEED);
+        break;
+      }
+      case Direction.BOTTOM: {
+        this.player.setVelocityY(MAX_SPEED);
+        break;
+      }
+      case Direction.LEFT: {
+        this.player.setVelocityX(-MAX_SPEED);
+        break;
+      }
+      case None.X: {
+        this.player.setVelocityX(0);
+        break;
+      }
+      case None.Y: {
+        this.player.setVelocityY(0);
+        break;
+      }
+    }
+  }
+
+  public moveByOrientation(direction: Direction | None) {
     switch (direction) {
       case Direction.TOP: {
         this.player.setVelocityY(this.motionY);
