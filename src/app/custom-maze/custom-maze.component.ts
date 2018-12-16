@@ -1,8 +1,9 @@
 import { Component, OnInit, ViewChild, ElementRef, HostListener } from '@angular/core';
 import { Ball } from '../ball';
 import { Colors } from '../colors.enum';
-import { GameService, Direction } from '../game.service';
+import { GameService, Direction, Brick } from '../game.service';
 import { KeyEventsPlugin } from '@angular/platform-browser/src/dom/events/key_events';
+import { Observable } from 'rxjs';
 
 export interface Cords {
   x: number;
@@ -25,26 +26,30 @@ export class CustomMazeComponent {
 
   @ViewChild('board') canvas: ElementRef;
 
-  private ball: Ball;
-
   constructor(
     private gameService: GameService
   ) {
-    this.ball = new Ball(150, 150, 50);
-    gameService.ball = this.ball;
-
     this.update = this.update.bind(this);
+
     this.gameService.update = this.update;
   }
 
   public update() {
     // Move ball if key pressed
-
     const ctx: CanvasRenderingContext2D = this.canvas.nativeElement.getContext('2d');
     ctx.fillStyle = Colors.WHITE;
     ctx.fillRect(0, 0, 4000, 4000);
+
+    const bricks = this.gameService.getWalls();
+    // Draw walls
+    bricks.forEach((brick) => {
+      console.log(`Drawing @ { x: ${brick.x}, y: ${brick.y}, width: ${brick.width}, height: ${brick.height} }`);
+      ctx.fillStyle = Colors.GREY;
+      ctx.fillRect(brick.x, brick.y, brick.width, brick.height);
+    });
+
     // Update the UI
-    this.ball.draw(ctx);
+    this.gameService.getBall().draw(ctx);
   }
 
   @HostListener('window:keydown', ['$event'])
