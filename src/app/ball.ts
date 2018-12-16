@@ -1,10 +1,11 @@
 import { Cords } from './custom-maze/custom-maze.component';
 import { Colors } from './colors.enum';
+import { Circle } from './collision-detection';
 
-export class Ball {
+export class Ball implements Circle {
 
-  private position: Cords;
-  private radius: number;
+  position: Cords;
+  radius: number;
 
   constructor(x: number, y: number, radius: number) {
     this.position = { x, y };

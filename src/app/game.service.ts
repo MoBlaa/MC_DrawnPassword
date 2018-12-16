@@ -120,9 +120,9 @@ export class GameService {
       }
 
       this.ball.updatePosition(updating.x, updating.y);
-      console.log('Moving');
+      // console.log(`Moving @ { x: ${updating.x}, y: ${updating.y} }`);
     } else {
-      console.log('Not Moving');
+      // console.log('Not Moving');
     }
 
     // Call callback method to update UI

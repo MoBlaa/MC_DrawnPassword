@@ -43,7 +43,7 @@ export class CustomMazeComponent {
     const bricks = this.gameService.getWalls();
     // Draw walls
     bricks.forEach((brick) => {
-      console.log(`Drawing @ { x: ${brick.x}, y: ${brick.y}, width: ${brick.width}, height: ${brick.height} }`);
+      // console.log(`Drawing @ { x: ${brick.x}, y: ${brick.y}, width: ${brick.width}, height: ${brick.height} }`);
       ctx.fillStyle = Colors.GREY;
       ctx.fillRect(brick.x, brick.y, brick.width, brick.height);
     });
