@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable, Subscriber, of } from 'rxjs';
-import { IWall, ICell, Maze } from './maze';
+import { IWall, ICell, Maze } from './maze/maze';
 import { mergeAll } from 'rxjs/operators';
 import { stringify } from '@angular/core/src/render3/util';
 
@@ -19,7 +19,7 @@ export function equal(set: Set<ICell>, set2: Set<ICell>): boolean {
 @Injectable({
   providedIn: 'root'
 })
-export class MazeService {
+export class MazeGeneratorService {
 
   sets: Map<string, Set<ICell>>;
   oldRef: Map<string, string>;
@@ -29,7 +29,7 @@ export class MazeService {
     this.oldRef = new Map<string, string>();
   }
 
-  join(set: string, setTwo: string): string {
+  private join(set: string, setTwo: string): string {
     const set1 = this.getSet(set), set2 = this.getSet(setTwo);
 
     set2.forEach(cell => set1.add(cell));
@@ -58,7 +58,7 @@ export class MazeService {
     return this.sets.get(set);
   }
 
-  generateMaze(size: number): Observable<IWall> {
+  public generateMaze(size: number): Observable<IWall> {
     return new Observable<IWall>(observer => {
       // Maze initializes itself with full cells and walls
       const maze = new Maze(size);

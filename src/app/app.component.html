@@ -1,2 +1,10 @@
 <!--The content below is only a placeholder and can be replaced.-->
-<app-maze></app-maze>
+<p>
+    <button type="button" (click)="startGame()">Start Game</button>
+    <button type="button" (click)="continueGame()">Continue Game</button>
+    <button type="button" (click)="openFullscreen()">Enable Fullscreen</button>
+</p>
+<app-custom-maze id="game" ngsf-toggle-fullscreen show-if-fullscreen-enabled></app-custom-maze>
+<p>
+
+</p>

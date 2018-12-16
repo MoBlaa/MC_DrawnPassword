@@ -1,5 +1,5 @@
 import { Injectable, Renderer2, ApplicationRef } from '@angular/core';
-import { MazeService } from './maze.service';
+import { MazeGeneratorService } from '../mazegenerator.service';
 import { IWall, ICell } from './maze';
 import { TouchSequence } from 'selenium-webdriver';
 import { DeviceDetectorService } from 'ngx-device-detector';
@@ -50,7 +50,7 @@ export class SceneService extends Phaser.Scene {
 
   constructor(
     private renderer: Renderer2,
-    private mazeService: MazeService,
+    private mazeService: MazeGeneratorService,
     private deviceService: DeviceDetectorService
   ) {
     super({ key: 'Scene' });
