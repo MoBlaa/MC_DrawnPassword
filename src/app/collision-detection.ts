@@ -32,7 +32,8 @@ export function pointInRectangle(point: Cords, brick: Brick) {
     brick.y <= point.y && point.y <= brick.y + brick.height;
 }
 
-export const intersectLine = (line: [Cords, Cords], circle: Circle) => {
+
+export function intersectLine(line: [Cords, Cords], circle: Circle): boolean {
   const x2 = line[1].x;
   const x1 = line[0].x;
   const x0 = circle.position.x;
