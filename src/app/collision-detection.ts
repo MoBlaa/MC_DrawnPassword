@@ -1,3 +1,5 @@
+import { isNumber } from 'util';
+
 export interface Range {
   min: number;
   max: number;
@@ -8,17 +10,37 @@ export interface Point {
   y: number;
 }
 
+export function isAPoint(p: any): p is Point {
+  return 'x' in p && 'y' in p;
+}
+
 export type Line = [Point, Point];
+
+export function isALine(l: any): l is Line {
+  return l instanceof Array && l.length === 2 && isAPoint(l[0]) && isAPoint(l[1]);
+}
 
 export interface Circle {
   position: Point;
   radius: number;
 }
 
+export function isACircle(c: any): c is Circle {
+  return 'position' in c && 'radius' in c && isAPoint(c.position) && isNumber(c.radius);
+}
+
 export interface Rectangle {
   anchor: Point;
   width: number;
   height: number;
+}
+
+export function isARectangle(r: any): r is Rectangle {
+  return 'anchor' in r && isAPoint(r.anchor) && 'width' in r && 'height' in r && isNumber(r.width) && isNumber(r.height);
+}
+
+export function randomInside(range: Range): number {
+  return Math.floor(Math.random() * range.max) + range.min;
 }
 
 function dist(point: Point, point2: Point): number {
@@ -47,8 +69,10 @@ export function pointCircle(point: Point, circle: Circle): boolean {
 }
 
 export function pointRectangle(point: Point, rect: Rectangle) {
-  return inside(point.x, { min: rect.anchor.x, max: rect.anchor.x + rect.width }) &&
-    inside(point.y, { min: rect.anchor.y, max: rect.anchor.y + rect.height });
+  return point.x >= rect.anchor.x
+    && point.x <= rect.anchor.x + rect.width
+    && point.y >= rect.anchor.y
+    && point.y <= rect.anchor.y + rect.height;
 }
 
 export function pointLine(point: Point, line: Line): boolean {
@@ -58,7 +82,7 @@ export function pointLine(point: Point, line: Line): boolean {
     dist(point, line[1])
   ];
   const buffer = 0.3; // higher # = less accurate
-  return (d[0] + d[2] >= lineLen - buffer && d[0] + d[1] <= lineLen + buffer);
+  return (d[0] + d[1] >= lineLen - buffer && d[0] + d[1] <= lineLen + buffer);
 }
 
 // http://www.jeffreythompson.org/collision-detection/line-circle.php
@@ -69,6 +93,7 @@ export function lineCircle(line: Line, circle: Circle): boolean {
     pointCircle({ x: line[1].x, y: line[1].y }, circle)
   ];
   if (ins[0] || ins[1]) {
+    console.log('Corners in the circle');
     return true;
   }
 
@@ -81,7 +106,7 @@ export function lineCircle(line: Line, circle: Circle): boolean {
   // Dot product to get the closest point on the line
   const dot = (
     ((circle.position.x - line[0].x) * (line[1].x - line[0].x))
-    + ((circle.position.y - line[1].y) * (line[1].y - line[0].y)))
+    + ((circle.position.y - line[0].y) * (line[1].y - line[0].y)))
     / Math.pow(len, 2);
   // Get the closest point to the circle on the line
   const closestP: Point = {
@@ -90,6 +115,7 @@ export function lineCircle(line: Line, circle: Circle): boolean {
   };
   const onSegment = pointLine(closestP, [{ x: line[0].x, y: line[0].y }, { x: line[1].x, y: line[1].y }]);
   if (!onSegment) {
+    console.log('Not On Segment');
     return false;
   }
 
@@ -115,13 +141,28 @@ export function rectangleCircle(rect: Rectangle, circle: Circle): boolean {
   ];
   const walls: Array<Line> = [
     [corners[0], corners[1]],
-    [corners[0], corners[3]],
     [corners[1], corners[2]],
-    [corners[3], corners[2]]
+    [corners[3], corners[2]],
+    [corners[0], corners[3]]
   ];
-  return pointRectangle(circle.position, rect)
-    || lineCircle(walls[0], circle)
-    || lineCircle(walls[1], circle)
-    || lineCircle(walls[2], circle)
-    || lineCircle(walls[3], circle);
+  const pInRect = pointRectangle(circle.position, rect);
+  const collidesWithNorth = lineCircle(walls[0], circle);
+  const collidesWithEast = lineCircle(walls[1], circle);
+  const collidesWithSouth = lineCircle(walls[2], circle);
+  const collidesWithWest = lineCircle(walls[3], circle);
+  let coll = 'Collides with: ';
+  if (collidesWithNorth) {
+    coll += 'North ';
+  }
+  if (collidesWithEast) {
+    coll += 'East ';
+  }
+  if (collidesWithSouth) {
+    coll += 'South ';
+  }
+  if (collidesWithWest) {
+    coll += 'West ';
+  }
+  console.log(coll);
+  return pInRect || collidesWithEast || collidesWithNorth || collidesWithSouth || collidesWithWest;
 }
