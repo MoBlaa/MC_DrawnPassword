@@ -1,4 +1,5 @@
 export enum Colors {
   GREY = '#aaaaaa',
-  WHITE = '#ffffff'
+  WHITE = '#ffffff',
+  GREEN = '#00aa00'
 }

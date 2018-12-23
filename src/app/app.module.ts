@@ -5,16 +5,16 @@ import { PhaserModule } from 'phaser-component-library';
 import { DeviceDetectorModule } from 'ngx-device-detector';
 
 import { AppComponent } from './app.component';
-import { CustomMazeComponent } from './custom-maze/custom-maze.component';
+import { CustomMazeModule } from './custom-maze/custom-maze.module';
 
 @NgModule({
   declarations: [
-    AppComponent,
-    CustomMazeComponent
+    AppComponent
   ],
   imports: [
     BrowserModule,
     PhaserModule,
+    CustomMazeModule,
     DeviceDetectorModule.forRoot()
   ],
   providers: [],

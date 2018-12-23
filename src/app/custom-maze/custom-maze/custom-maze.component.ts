@@ -1,9 +1,6 @@
-import { Component, OnInit, ViewChild, ElementRef, HostListener } from '@angular/core';
-import { Ball } from '../ball';
-import { Colors } from '../colors.enum';
-import { GameService, Direction, Brick } from '../game.service';
-import { KeyEventsPlugin } from '@angular/platform-browser/src/dom/events/key_events';
-import { Observable } from 'rxjs';
+import { Component, ViewChild, ElementRef, HostListener } from '@angular/core';
+import { Colors } from '../../colors.enum';
+import { GameService, Direction} from '../../game.service';
 
 export interface Cords {
   x: number;
@@ -42,11 +39,7 @@ export class CustomMazeComponent {
 
     const bricks = this.gameService.getWalls();
     // Draw walls
-    bricks.forEach((brick) => {
-      // console.log(`Drawing @ { x: ${brick.x}, y: ${brick.y}, width: ${brick.width}, height: ${brick.height} }`);
-      ctx.fillStyle = Colors.GREY;
-      ctx.fillRect(brick.x, brick.y, brick.width, brick.height);
-    });
+    bricks.forEach((brick) => brick.draw(ctx));
 
     // Update the UI
     this.gameService.getBall().draw(ctx);

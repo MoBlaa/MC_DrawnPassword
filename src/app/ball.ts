@@ -1,4 +1,4 @@
-import { Cords } from './custom-maze/custom-maze.component';
+import { Cords } from './custom-maze/custom-maze/custom-maze.component';
 import { Colors } from './colors.enum';
 import { Circle } from './collision-detection';
 

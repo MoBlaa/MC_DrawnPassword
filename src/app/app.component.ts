@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { GameService } from './game.service';
 import * as screenfull from 'screenfull';
-import { CustomMazeComponent } from './custom-maze/custom-maze.component';
+import { CustomMazeComponent } from './custom-maze/custom-maze/custom-maze.component';
 
 @Component({
   selector: 'app-root',

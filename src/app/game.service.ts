@@ -1,21 +1,13 @@
 import { Injectable } from '@angular/core';
 import { Ball } from './ball';
-import { Cords } from './custom-maze/custom-maze.component';
+import { Cords } from './custom-maze/custom-maze/custom-maze.component';
 import { MazeGeneratorService } from './mazegenerator.service';
-import { IWall } from './maze/maze';
-import { Observable, of } from 'rxjs';
-import { mergeAll } from 'rxjs/operators';
-import { CollisionDetection } from './collision-detection';
+import { CollisionDetector } from './collision-detector';
+import { Brick } from './brick';
+import { IWall } from './maze';
 
 export enum Direction {
   NORTH, EAST, SOUTH, WEST, NONEX, NONEY
-}
-
-export interface Brick {
-  x: number;
-  y: number;
-  height: number;
-  width: number;
 }
 
 @Injectable({
@@ -33,7 +25,7 @@ export class GameService {
   private gameSize = 4000;
   private mazeSize = 10;
   private cellSize = this.gameSize / this.mazeSize;
-  private wallWidth = 10;
+  private wallWidth = 20;
 
   private walls: Map<IWall, Brick>;
   private ball: Ball;
@@ -109,13 +101,15 @@ export class GameService {
     if (!(updating.x === 0 && updating.y === 0)) {
       // Collision Detection
       // Perform Collision Detection
-      const cd = new CollisionDetection(this.ball, this.getWalls());
+      const cd = new CollisionDetector(this.ball, this.getWalls());
       const [hColl, vColl] = cd.perform(updating);
 
-      if (hColl) {
+      if (hColl !== null) {
+        hColl.collided = true;
         updating.x = 0;
       }
-      if (vColl) {
+      if (vColl !== null) {
+        vColl.collided = true;
         updating.y = 0;
       }
 
@@ -159,14 +153,15 @@ export class GameService {
       const width = orientation === 'h' ? this.cellSize + this.wallWidth : this.wallWidth;
       const height = orientation !== 'h' ? this.cellSize + this.wallWidth : this.wallWidth;
 
-      this.walls.set(wall, { x, y, width, height });
+      const brick = new Brick({ x, y }, width, height);
+      this.walls.set(wall, brick);
     } else {
       this.walls.delete(wall);
     }
   }
 
   public start() {
-    this.gameDuration = 0;
+    this.reset();
     this.startTime = Date.now();
     this.intervalTimer = window.setInterval(() => this.updateGame(), 1000 / this.fps);
 
@@ -192,5 +187,6 @@ export class GameService {
     this.startTime = -1;
     window.clearInterval(this.intervalTimer);
     this.intervalTimer = -1;
+    this.walls = new Map<IWall, Brick>();
   }
 }

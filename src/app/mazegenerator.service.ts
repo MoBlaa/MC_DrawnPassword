@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { Observable, Subscriber, of } from 'rxjs';
-import { IWall, ICell, Maze } from './maze/maze';
 import { mergeAll } from 'rxjs/operators';
 import { stringify } from '@angular/core/src/render3/util';
+import { Point } from './collision-detection';
+import { ICell, IWall, Maze } from './maze';
 
 export function equal(set: Set<ICell>, set2: Set<ICell>): boolean {
   if (set.size !== set2.size) {
