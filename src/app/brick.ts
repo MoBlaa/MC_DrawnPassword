@@ -4,8 +4,8 @@ import { Rectangle, Point } from './collision-detection';
 export class Brick implements Rectangle {
     public constructor(
         public anchor: Point,
-        public height: number,
         public width: number,
+        public height: number,
         public collided = false
     ) { }
 

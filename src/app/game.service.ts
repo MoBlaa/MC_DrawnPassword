@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
 import { Ball } from './ball';
-import { Cords } from './custom-maze/custom-maze/custom-maze.component';
 import { MazeGeneratorService } from './mazegenerator.service';
 import { CollisionDetector } from './collision-detector';
 import { Brick } from './brick';
 import { IWall } from './maze';
+import { Point } from './collision-detection';
 
 export enum Direction {
   NORTH, EAST, SOUTH, WEST, NONEX, NONEY
@@ -16,10 +16,10 @@ export enum Direction {
 export class GameService {
   private gameDuration: number;
   private startTime: number;
-  private fps = 60;
+  private fps = 30;
   private intervalTimer: number;
 
-  private movement: Cords;
+  private movement: Point;
   private moveSpeed = 10;
 
   private gameSize = 4000;
@@ -87,7 +87,7 @@ export class GameService {
   public updateGame() {
     // Re-calc Ball Position
     const cords = this.ball.getPosition();
-    const updating: Cords = { x: this.movement.x, y: this.movement.y };
+    const updating: Point = { x: this.movement.x, y: this.movement.y };
     if (cords.x + this.movement.x + this.ball.getRadius() > this.gameSize) {
       updating.x = this.gameSize - this.ball.getRadius() - cords.x;
     } else if (cords.x + this.movement.x - this.ball.getRadius() < 0) {
