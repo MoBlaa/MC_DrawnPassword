@@ -39,21 +39,18 @@ export class CollisionDetector<C extends Rectangle> {
         };
         const wallIter = this.walls[Symbol.iterator]();
         let wallRes = wallIter.next();
-        while (!wallRes.done && overlapping[0] === null && overlapping[1] === null) {
+        while (!wallRes.done) {
             const wall = wallRes.value;
 
             // Collision Detection with wall and ball
-            const collidesBoth = rectangleCircle(wall, ballMoved);
             const collidesX = rectangleCircle(wall, ballMovedX);
             const collidesY = rectangleCircle(wall, ballMovedY);
 
-            if (collidesBoth) {
-                if (collidesX) {
-                    overlapping[0] = wall;
-                }
-                if (collidesY) {
-                    overlapping[1] = wall;
-                }
+            if (collidesX) {
+                overlapping[0] = wall;
+            }
+            if (collidesY) {
+                overlapping[1] = wall;
             }
 
             wallRes = wallIter.next();

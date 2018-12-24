@@ -93,7 +93,6 @@ export function lineCircle(line: Line, circle: Circle): boolean {
     pointCircle({ x: line[1].x, y: line[1].y }, circle)
   ];
   if (ins[0] || ins[1]) {
-    console.log('Corners in the circle');
     return true;
   }
 
@@ -115,7 +114,6 @@ export function lineCircle(line: Line, circle: Circle): boolean {
   };
   const onSegment = pointLine(closestP, [{ x: line[0].x, y: line[0].y }, { x: line[1].x, y: line[1].y }]);
   if (!onSegment) {
-    console.log('Not On Segment');
     return false;
   }
 
@@ -150,19 +148,5 @@ export function rectangleCircle(rect: Rectangle, circle: Circle): boolean {
   const collidesWithEast = lineCircle(walls[1], circle);
   const collidesWithSouth = lineCircle(walls[2], circle);
   const collidesWithWest = lineCircle(walls[3], circle);
-  let coll = 'Collides with: ';
-  if (collidesWithNorth) {
-    coll += 'North ';
-  }
-  if (collidesWithEast) {
-    coll += 'East ';
-  }
-  if (collidesWithSouth) {
-    coll += 'South ';
-  }
-  if (collidesWithWest) {
-    coll += 'West ';
-  }
-  console.log(coll);
   return pInRect || collidesWithEast || collidesWithNorth || collidesWithSouth || collidesWithWest;
 }
