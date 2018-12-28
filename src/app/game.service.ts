@@ -1,14 +1,17 @@
 import { Injectable } from '@angular/core';
 import { Ball } from './ball';
 import { MazeGeneratorService } from './mazegenerator.service';
-import { CollisionDetector } from './collision-detector';
+import { CollisionDetector } from './physics/collision-detector';
 import { Brick } from './brick';
-import { IWall } from './maze';
-import { Point } from './collision-detection';
+import { IWall, toKey } from './maze';
+import { Vector } from './physics/collision-detection';
+import { Subscription } from 'rxjs';
 
 export enum Direction {
   NORTH, EAST, SOUTH, WEST, NONEX, NONEY
 }
+
+const MAX_MOVEMENT = 100;
 
 @Injectable({
   providedIn: 'root'
@@ -16,32 +19,37 @@ export enum Direction {
 export class GameService {
   private gameDuration: number;
   private startTime: number;
-  private fps = 30;
+  private fps = 60;
   private intervalTimer: number;
 
-  private movement: Point;
-  private moveSpeed = 10;
+  private movement: Vector;
 
   private gameSize = 4000;
-  private mazeSize = 10;
+  readonly mazeSize = 20;
   private cellSize = this.gameSize / this.mazeSize;
   private wallWidth = 20;
 
-  private walls: Map<IWall, Brick>;
+  private walls: Set<Brick>;
   private ball: Ball;
 
-  public update: () => void;
+  // Initializes the bricks
+  public init: (walls: Array<Brick>) => void;
+  // Updates the ball position
+  public update: (ball: Ball) => void;
 
   constructor(
     private mazeService: MazeGeneratorService
   ) {
-    this.ball = new Ball(this.cellSize / 2, this.cellSize / 2, this.cellSize / 4);
     this.movement = {
       x: 0, y: 0
     };
-    this.walls = new Map<IWall, Brick>();
+    this.walls = new Set<Brick>();
+
+    this.update = () => { };
 
     this.updateWall = this.updateWall.bind(this);
+    this.stop = this.stop.bind(this);
+    this.start = this.start.bind(this);
   }
 
   public getTimePlayed(): number {
@@ -56,22 +64,38 @@ export class GameService {
     return this.ball;
   }
 
-  public move(direction: Direction) {
+  public getMovement(): Vector {
+    return this.movement;
+  }
+
+  public moveByAcceleration(accel: { beta: number, gamma: number }) {
+    this.movement.x = accel.gamma;
+    this.movement.y = accel.beta;
+
+    if (this.movement.x > MAX_MOVEMENT) {
+      this.movement.x = MAX_MOVEMENT;
+    }
+    if (this.movement.y > MAX_MOVEMENT) {
+      this.movement.y = MAX_MOVEMENT;
+    }
+  }
+
+  public moveByDirection(direction: Direction) {
     switch (direction) {
       case Direction.NORTH: {
-        this.movement.y = -this.moveSpeed;
+        this.movement.y = -MAX_MOVEMENT;
         break;
       }
       case Direction.EAST: {
-        this.movement.x = this.moveSpeed;
+        this.movement.x = MAX_MOVEMENT;
         break;
       }
       case Direction.SOUTH: {
-        this.movement.y = this.moveSpeed;
+        this.movement.y = MAX_MOVEMENT;
         break;
       }
       case Direction.WEST: {
-        this.movement.x = - this.moveSpeed;
+        this.movement.x = -MAX_MOVEMENT;
         break;
       }
       case Direction.NONEX: {
@@ -86,17 +110,17 @@ export class GameService {
 
   public updateGame() {
     // Re-calc Ball Position
-    const cords = this.ball.getPosition();
-    const updating: Point = { x: this.movement.x, y: this.movement.y };
-    if (cords.x + this.movement.x + this.ball.getRadius() > this.gameSize) {
-      updating.x = this.gameSize - this.ball.getRadius() - cords.x;
-    } else if (cords.x + this.movement.x - this.ball.getRadius() < 0) {
-      updating.x = -(cords.x - this.ball.getRadius());
+    const cords = this.ball.position;
+    const updating: Vector = { x: this.movement.x, y: this.movement.y };
+    if (cords.x + this.movement.x + this.ball.radius > this.gameSize) {
+      updating.x = this.gameSize - this.ball.radius - cords.x;
+    } else if (cords.x + this.movement.x - this.ball.radius < 0) {
+      updating.x = -(cords.x - this.ball.radius);
     }
-    if (cords.y + this.movement.y + this.ball.getRadius() > this.gameSize) {
-      updating.y = this.gameSize - this.ball.getRadius() - cords.y;
-    } else if (cords.y + this.movement.y - this.ball.getRadius() < 0) {
-      updating.y = -(cords.y - this.ball.getRadius());
+    if (cords.y + this.movement.y + this.ball.radius > this.gameSize) {
+      updating.y = this.gameSize - this.ball.radius - cords.y;
+    } else if (cords.y + this.movement.y - this.ball.radius < 0) {
+      updating.y = -(cords.y - this.ball.radius);
     }
     if (!(updating.x === 0 && updating.y === 0)) {
       // Collision Detection
@@ -120,73 +144,87 @@ export class GameService {
     }
 
     // Call callback method to update UI
-    this.update();
+    this.update(this.ball);
   }
 
   private updateWall(wall: IWall) {
+    // Check where to place the wall
+    const offX = wall.cellOne.x - wall.cellTwo.x;
+    const offY = wall.cellOne.y - wall.cellTwo.y;
+
+    let relX = wall.cellOne.x;
+    let relY = wall.cellOne.y;
+    let orientation = 'h';
+    if (offX === -1) {
+      // East
+      relX += 1;
+      orientation = 'v';
+    } else if (offY === 1) {
+      // North
+      // Orientation = horizontal
+    } else if (offX === 1) {
+      // West
+      orientation = 'v';
+    } else if (offY === -1) {
+      // South
+      relY += 1;
+      // Orientation = horizontal
+    }
+    // Subtract half of the wall-width
+    const x = relX * this.cellSize - this.wallWidth / 2;
+    const y = relY * this.cellSize - this.wallWidth / 2;
+    const width = orientation === 'h' ? this.cellSize + this.wallWidth : this.wallWidth;
+    const height = orientation !== 'h' ? this.cellSize + this.wallWidth : this.wallWidth;
+    const brick = new Brick({ x, y }, width, height);
+
+    const id = toKey({ x, y });
+
+    const duplicate = Array.from(this.walls.values())
+      .filter(b => {
+        return b.anchor.x === x && b.anchor.y === y &&
+          b.height === height && b.width === width;
+      }).pop();
+
     if (wall.present) {
-      // Check where to place the wall
-      const offX = wall.cellOne.x - wall.cellTwo.x;
-      const offY = wall.cellOne.y - wall.cellTwo.y;
-
-      let relX = wall.cellOne.x;
-      let relY = wall.cellOne.y;
-      let orientation = 'h';
-      if (offX === -1) {
-        // East
-        relX += 1;
-        orientation = 'v';
-      } else if (offY === 1) {
-        // North
-        // Orientation = horizontal
-      } else if (offX === 1) {
-        // West
-        orientation = 'v';
-      } else if (offY === -1) {
-        // South
-        relY += 1;
-        // Orientation = horizontal
+      // Check if wall already exists
+      if (duplicate) {
+        console.log(`Overwriting existing wall @ ${id}`);
+        this.walls.delete(duplicate);
+      } else {
+        this.walls.add(brick);
       }
-      // Subtract half of the wall-width
-      const x = relX * this.cellSize - this.wallWidth / 2;
-      const y = relY * this.cellSize - this.wallWidth / 2;
-      const width = orientation === 'h' ? this.cellSize + this.wallWidth : this.wallWidth;
-      const height = orientation !== 'h' ? this.cellSize + this.wallWidth : this.wallWidth;
-
-      const brick = new Brick({ x, y }, width, height);
-      this.walls.set(wall, brick);
     } else {
-      this.walls.delete(wall);
+      this.walls.delete(duplicate);
     }
   }
 
+  // ========== Mobile Game Controls ==========
+
+  // ========== Game Controls ==========
+
   public start() {
-    this.reset();
+    this.stop();
+    this.ball = new Ball(this.cellSize / 2, this.cellSize / 2, this.cellSize / 4);
     this.startTime = Date.now();
-    this.intervalTimer = window.setInterval(() => this.updateGame(), 1000 / this.fps);
 
     // Generate Maze
     this.mazeService.generateMaze(this.mazeSize)
       .subscribe({
         next: this.updateWall,
-        complete: () => { }
+        complete: () => {
+          console.log('Initialized the maze, starting the game-loop now');
+          this.init(this.getWalls());
+          this.intervalTimer = window.setInterval(() => this.updateGame(), 1000 / this.fps);
+        }
       });
   }
 
-  public continue() {
-    this.startTime = Date.now();
-  }
-
-  public pause() {
-    this.gameDuration = Date.now() - this.startTime;
-    this.reset();
-  }
-
-  public reset() {
+  public stop() {
     this.gameDuration = 0;
     this.startTime = -1;
     window.clearInterval(this.intervalTimer);
     this.intervalTimer = -1;
-    this.walls = new Map<IWall, Brick>();
+    this.walls.clear();
+    this.ball = null;
   }
 }

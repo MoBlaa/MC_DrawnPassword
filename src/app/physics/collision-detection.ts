@@ -5,23 +5,23 @@ export interface Range {
   max: number;
 }
 
-export interface Point {
+export interface Vector {
   x: number;
   y: number;
 }
 
-export function isAPoint(p: any): p is Point {
+export function isAPoint(p: any): p is Vector {
   return 'x' in p && 'y' in p;
 }
 
-export type Line = [Point, Point];
+export type Line = [Vector, Vector];
 
 export function isALine(l: any): l is Line {
   return l instanceof Array && l.length === 2 && isAPoint(l[0]) && isAPoint(l[1]);
 }
 
 export interface Circle {
-  position: Point;
+  position: Vector;
   radius: number;
 }
 
@@ -30,7 +30,7 @@ export function isACircle(c: any): c is Circle {
 }
 
 export interface Rectangle {
-  anchor: Point;
+  anchor: Vector;
   width: number;
   height: number;
 }
@@ -43,7 +43,7 @@ export function randomInside(range: Range): number {
   return Math.floor(Math.random() * range.max) + range.min;
 }
 
-function dist(point: Point, point2: Point): number {
+function dist(point: Vector, point2: Vector): number {
   return Math.sqrt(
     (point2.x - point.x) * (point2.x - point.x) +
     (point2.y - point.y) * (point2.y - point.y)
@@ -54,12 +54,12 @@ function inside(x: number, range: Range) {
   return range.min <= x && x <= range.max;
 }
 
-export function pointPoint(p1: Point, p2: Point): boolean {
+export function pointPoint(p1: Vector, p2: Vector): boolean {
   return p1.x === p2.x && p1.y === p2.y;
 }
 
 // http://www.jeffreythompson.org/collision-detection/point-circle.php
-export function pointCircle(point: Point, circle: Circle): boolean {
+export function pointCircle(point: Vector, circle: Circle): boolean {
   const distCenter: [number, number] = [
     point.x - circle.position.x,
     point.y - circle.position.y
@@ -68,14 +68,14 @@ export function pointCircle(point: Point, circle: Circle): boolean {
   return distance <= circle.radius;
 }
 
-export function pointRectangle(point: Point, rect: Rectangle) {
+export function pointRectangle(point: Vector, rect: Rectangle) {
   return point.x >= rect.anchor.x
     && point.x <= rect.anchor.x + rect.width
     && point.y >= rect.anchor.y
     && point.y <= rect.anchor.y + rect.height;
 }
 
-export function pointLine(point: Point, line: Line): boolean {
+export function pointLine(point: Vector, line: Line): boolean {
   const lineLen = dist(line[0], line[1]);
   const d = [
     dist(point, line[0]),
@@ -108,7 +108,7 @@ export function lineCircle(line: Line, circle: Circle): boolean {
     + ((circle.position.y - line[0].y) * (line[1].y - line[0].y)))
     / Math.pow(len, 2);
   // Get the closest point to the circle on the line
-  const closestP: Point = {
+  const closestP: Vector = {
     x: line[0].x + (dot * (line[1].x - line[0].x)),
     y: line[0].y + (dot * (line[1].y - line[0].y))
   };
@@ -131,7 +131,7 @@ export function lineCircle(line: Line, circle: Circle): boolean {
 
 // https://stackoverflow.com/questions/401847/circle-rectangle-collision-detection-intersection
 export function rectangleCircle(rect: Rectangle, circle: Circle): boolean {
-  const corners: Array<Point> = [
+  const corners: Array<Vector> = [
     { x: rect.anchor.x, y: rect.anchor.y },
     { x: rect.anchor.x + rect.width, y: rect.anchor.y },
     { x: rect.anchor.x + rect.width, y: rect.anchor.y + rect.height },

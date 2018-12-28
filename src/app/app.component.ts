@@ -18,28 +18,26 @@ export class AppComponent {
   public openFullscreen() {
     if (screenfull.enabled) {
       screenfull.request(document.getElementById('game-div'));
-      screenfull.onchange(() => {
-        if (screenfull.isFullscreen) {
-          this.pauseGame();
-        }
-      });
+
+      window.screen.orientation.lock('portrait')
+        .then(() => console.log('Successfully locked screen orientation'))
+        .catch((reason) => console.error('Failed to lock screen orientation: ' + reason));
+
+      /*
+    screenfull.onchange(() => {
+      if (screenfull.isFullscreen) {
+        this.pauseGame();
+      }
+    });
+    */
     }
-    this.startGame();
   }
 
   public startGame() {
     this.gameService.start();
   }
 
-  public continueGame() {
-    this.gameService.continue();
-  }
-
   public stopGame() {
-    this.gameService.reset();
-  }
-
-  public pauseGame() {
-    this.gameService.pause();
+    this.gameService.stop();
   }
 }

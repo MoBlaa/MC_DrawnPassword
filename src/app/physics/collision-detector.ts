@@ -1,6 +1,5 @@
-import { Ball } from './ball';
-import { Circle, rectangleCircle, Rectangle } from './collision-detection';
-import { Cords } from './custom-maze/custom-maze/custom-maze.component';
+import { Ball } from '../ball';
+import { Circle, rectangleCircle, Rectangle, Vector } from './collision-detection';
 
 export class CollisionDetector<C extends Rectangle> {
     constructor(
@@ -11,10 +10,10 @@ export class CollisionDetector<C extends Rectangle> {
     /**
      * Returns if [horizontal, vertical] overlapping has happened.
      */
-    perform(changes: Cords): [C, C] {
+    perform(changes: Vector): [C, C] {
         // Check if Ball collides with wall
-        const ballCords = this.ball.getPosition();
-        const ballR = this.ball.getRadius();
+        const ballCords = this.ball.position;
+        const ballR = this.ball.radius;
         const overlapping: [C, C] = [null, null];
         const ballMoved: Circle = {
             position: {

@@ -1,12 +1,12 @@
 import {
-    Point, pointPoint,
+    Vector, pointPoint,
     Circle, pointCircle,
     Rectangle, randomInside,
     pointRectangle, Line,
     isARectangle, isACircle, rectangleCircle, pointLine, lineCircle
 } from './collision-detection';
 
-function randomPoint(): Point {
+function randomPoint(): Vector {
     return {
         x: randomInside({ min: -250, max: 250 }),
         y: randomInside({ min: -250, max: 250 })
@@ -34,8 +34,8 @@ function randomCircle(): Circle {
     };
 }
 
-function randomPointIn(object: Rectangle | Circle): Point {
-    let result: Point;
+function randomPointIn(object: Rectangle | Circle): Vector {
+    let result: Vector;
     if (isARectangle(object)) {
         result = {
             x: randomInside({
@@ -63,7 +63,7 @@ function randomPointIn(object: Rectangle | Circle): Point {
 describe('PointToPoint', () => {
     it('#pointPoint detects colliding points', () => {
         const p1 = randomPoint();
-        const p2: Point = {
+        const p2: Vector = {
             x: p1.x,
             y: p1.y
         };
@@ -77,10 +77,10 @@ describe('PointToPoint', () => {
 
     it('#pointPoint returns false on points only on same x- or y-Level', () => {
         const p1 = randomPoint();
-        const p2: Point = {
+        const p2: Vector = {
             x: p1.x, y: p1.y - 10
         };
-        const p3: Point = {
+        const p3: Vector = {
             x: p1.x + 10, y: p1.y
         };
         expect(pointPoint(p1, p2)).toBeFalsy();
@@ -89,7 +89,7 @@ describe('PointToPoint', () => {
 
     it('#pointPoint returns false on not colliding points', () => {
         const p1 = randomPoint();
-        const p2: Point = {
+        const p2: Vector = {
             x: p1.x - 44, y: p1.y + 40
         };
         expect(pointPoint(p1, p2)).toBeFalsy();
@@ -105,7 +105,7 @@ describe('PointToCircle', () => {
 
     it('#pointCircle detects random point out of circle', () => {
         const circle = randomCircle();
-        const upper: Point = {
+        const upper: Vector = {
             x: randomInside({
                 min: circle.position.x + circle.radius + 1,
                 max: circle.position.x + circle.radius + circle.radius * 10
@@ -115,7 +115,7 @@ describe('PointToCircle', () => {
                 max: circle.position.y + circle.radius + circle.radius * 10
             })
         };
-        const under: Point = {
+        const under: Vector = {
             x: randomInside({
                 min: circle.position.x - circle.radius - 1,
                 max: circle.position.x - circle.radius - circle.radius * 10
@@ -133,7 +133,7 @@ describe('PointToCircle', () => {
 describe('PointToRectangle', () => {
     it('#pointRectangle detects if point in a rectangle is in the rectangle', () => {
         const rectangle = randomRectangle();
-        const point: Point = {
+        const point: Vector = {
             x: rectangle.anchor.x + rectangle.width / 2,
             y: rectangle.anchor.y + rectangle.height / 2
         };
@@ -150,7 +150,7 @@ describe('PointToRectangle', () => {
 
     it('#pointInRectangle detects random point outside rectangle', () => {
         const rectangle = randomRectangle();
-        const point: Point = {
+        const point: Vector = {
             x: randomInside({
                 min: rectangle.anchor.x - 250,
                 max: rectangle.anchor.x - 1

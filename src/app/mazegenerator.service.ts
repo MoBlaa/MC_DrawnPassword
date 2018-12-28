@@ -26,8 +26,7 @@ export class MazeGeneratorService {
   oldRef: Map<string, string>;
 
   constructor() {
-    this.sets = new Map<string, Set<ICell>>();
-    this.oldRef = new Map<string, string>();
+    this.reset();
   }
 
   private join(set: string, setTwo: string): string {
@@ -93,8 +92,14 @@ export class MazeGeneratorService {
           console.log('Equal set found');
         }
       }
+      this.reset();
       observer.complete();
     });
+  }
+
+  private reset(): void {
+    this.sets = new Map<string, Set<ICell>>();
+    this.oldRef = new Map<string, string>();
   }
 
   private printState(maze: Maze) {

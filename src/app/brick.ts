@@ -1,9 +1,9 @@
 import { Colors } from './colors.enum';
-import { Rectangle, Point } from './collision-detection';
+import { Rectangle, Vector } from './physics/collision-detection';
 
 export class Brick implements Rectangle {
     public constructor(
-        public anchor: Point,
+        public anchor: Vector,
         public width: number,
         public height: number,
         public collided = false

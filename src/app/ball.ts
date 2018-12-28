@@ -1,31 +1,22 @@
-import { Cords } from './custom-maze/custom-maze/custom-maze.component';
 import { Colors } from './colors.enum';
-import { Circle } from './collision-detection';
+import { Circle, Vector } from './physics/collision-detection';
 
 export class Ball implements Circle {
 
-  position: Cords;
+  position: Vector;
   radius: number;
+  color: string;
 
-  constructor(x: number, y: number, radius: number) {
+  constructor(x: number, y: number, radius: number, color = Colors.GREY) {
     this.position = { x, y };
     this.radius = radius;
-  }
+    this.color = color;
 
-  public getPosition(): Cords {
-    return { x: this.position.x, y: this.position.y };
-  }
-
-  public getRadius(): number {
-    return this.radius;
+    this.draw = this.draw.bind(this);
   }
 
   public updatePosition(x: number, y: number) {
     this.position = { x: this.position.x + x, y: this.position.y + y };
-  }
-
-  public updateSize(radius: number) {
-    this.radius = radius;
   }
 
   /**
@@ -34,7 +25,7 @@ export class Ball implements Circle {
    * @param ctx Context to draw into
    */
   public draw(ctx?: CanvasRenderingContext2D) {
-    ctx.fillStyle = Colors.GREY;
+    ctx.fillStyle = this.color;
     ctx.beginPath();
     ctx.arc(this.position.x, this.position.y, this.radius, 0, 2 * Math.PI);
     ctx.fill();
