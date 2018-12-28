@@ -1,8 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable, Subscriber, of } from 'rxjs';
-import { mergeAll } from 'rxjs/operators';
-import { stringify } from '@angular/core/src/render3/util';
-import { Point } from './collision-detection';
+import { Observable } from 'rxjs';
 import { ICell, IWall, Maze } from './maze';
 
 export function equal(set: Set<ICell>, set2: Set<ICell>): boolean {
