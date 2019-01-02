@@ -14,6 +14,8 @@ export class AppComponent {
   time: string;
   running = false;
 
+  timeUpdater: number;
+
   @ViewChild('start') btnStart: ElementRef;
   @ViewChild('stop') btnStop: ElementRef;
 
@@ -31,18 +33,18 @@ export class AppComponent {
     this.stopGame();
     this.alerting = true;
     // Show the message
-    this.alertMessage.nativeElement.innerHTML = `Congrats! You took "${this.getCurrentTime()}" (mm:ss)`;
+    this.alertMessage.nativeElement.innerHTML = `Congrats! You took "${this.time}" (mm:ss)`;
+    this.time = this.msToString(0);
   }
 
-  public getCurrentTime(): string {
+  public getCurrentTime(): number {
     const sinceLast = this.gameService.getStartTime();
     if (sinceLast < 0) {
-      this.time = '00:00';
+      return 0;
     } else {
       const now = Date.now();
-      this.time = this.msToString(now - sinceLast);
+      return now - sinceLast;
     }
-    return this.time;
   }
 
   private msToString(ms: number): string {
@@ -65,7 +67,7 @@ export class AppComponent {
   }
 
   private openFullscreen() {
-    if (screenfull) {
+    if (screenfull && !screenfull.isFullscreen) {
       screenfull.request(document.getElementById('game-div'));
 
       window.screen.orientation.lock('portrait')
@@ -93,12 +95,17 @@ export class AppComponent {
     this.gameService.start();
     this.running = true;
     this.alerting = false;
+
+    this.timeUpdater = window.setInterval(() => {
+      this.time = this.msToString(this.getCurrentTime());
+    }, 1000);
   }
 
   public stopGame() {
-    this.exitFullscreen();
     this.gameService.stop();
     this.running = false;
+
+    window.clearInterval(this.timeUpdater);
   }
 
   public toggleGame(): void {
