@@ -28,7 +28,7 @@ export interface IGameServiceConfig {
 })
 export class GameService {
   private startTime: number;
-  private fps = 30;
+  private fps = 60;
   private intervalTimer: number;
 
   private lastUpdated: number;
@@ -153,11 +153,11 @@ export class GameService {
 
     // Calculate the passed time
     const now = Date.now();
-    const t = (now - this.lastUpdated) / 100;
+    const t = (now - this.lastUpdated) / 1000;
 
     // Calculate velocity
-    this.velocity.x += ((this.acceleration.x * t) * 3);
-    this.velocity.y += ((this.acceleration.y * t) * 3);
+    this.velocity.x += ((this.acceleration.x * t) * MAX_ACCELERATION);
+    this.velocity.y += ((this.acceleration.y * t) * MAX_ACCELERATION);
 
     const updating: Vector = {
       x: this.velocity.x * t,
@@ -285,6 +285,7 @@ export class GameService {
   // ========== Game Controls ==========
 
   public start() {
+    this.walls.clear();
     this.ball = new Ball(this.cellSize / 2, this.cellSize / 2, this.cellSize / 4);
     this.startTime = Date.now();
 
@@ -335,6 +336,5 @@ export class GameService {
     this.startTime = -1;
     window.clearInterval(this.intervalTimer);
     this.intervalTimer = -1;
-    this.walls.clear();
   }
 }

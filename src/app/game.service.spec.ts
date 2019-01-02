@@ -21,7 +21,6 @@ fdescribe('GameService', () => {
   it('#start should initialize maze', () => {
     const service: GameService = TestBed.get(GameService);
     service.start();
-    expect(service.getBall()).toBeTruthy();
     expect(service.getWalls()).toBeTruthy();
     expect(service.getWalls().length).toBeGreaterThan(0);
   });
@@ -30,7 +29,6 @@ fdescribe('GameService', () => {
     const service: GameService = TestBed.get(GameService);
     service.start();
     service.stop();
-    expect(service.getBall()).toBeFalsy();
     expect(service.getWalls().length).toEqual(0);
   });
 
