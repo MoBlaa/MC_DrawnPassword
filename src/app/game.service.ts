@@ -223,8 +223,6 @@ export class GameService {
       console.log('Not Moving');
     }
 
-    console.log(`Ball: ${JSON.stringify(this.ball)}`);
-
     // Call callback method to update UI
     this.update(this.ball, this.getWalls());
 

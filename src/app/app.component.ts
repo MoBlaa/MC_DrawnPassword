@@ -13,7 +13,7 @@ export class AppComponent {
   title = 'MazeGame';
 
   time: string;
-  msTime: number;
+  msTime = 0;
 
   running = false;
 
@@ -40,13 +40,13 @@ export class AppComponent {
     this.alertMessage.nativeElement.innerHTML = `Congrats! You took "${this.time}" (mm:ss)`;
 
     // Compare time with highscore
-    if (this.msTime < this.gameStateService.loadGamestate().highscore) {
+    const highscore = this.gameStateService.loadGamestate().highscore;
+    if (highscore <= 0 || this.msTime < highscore) {
       this.gameStateService.saveGamestate({
         highscore: this.msTime
       });
     }
-
-    this.time = this.msToString(0);
+    console.log(`New Highscore: ${this.msTime}`);
   }
 
   public getHighscore(): string {

@@ -32,7 +32,7 @@ export class GameStateService {
 
   public saveGamestate(gamestate: GameState): void {
     // Check gamestate
-    if (gamestate.highscore > this.latest.highscore) {
+    if (gamestate.highscore > this.latest.highscore && this.latest.highscore > 0) {
       console.error(`Tried to set Gamestate to invalid: ${JSON.stringify(gamestate)} @ latest '${JSON.stringify(this.latest)}'`);
       return;
     }
