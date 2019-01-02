@@ -39,11 +39,12 @@ export class CustomMazeComponent {
     renderer.listen('window', 'deviceorientation', this.handleAcceleration);
 
     // Init areas
-    const areaSize = this.gameService.cellSize;
-    this.startArea = new Area(Colors.RED, { x: 0, y: 0}, areaSize, areaSize);
+    const offset = this.gameService.cellSize / 3;
+    const areaSize = this.gameService.cellSize - 2 * offset;
+    this.startArea = new Area(Colors.RED, { x: offset, y: offset }, areaSize, areaSize);
     const endAnchor: Vector = {
-      x: this.gameService.gameSize - this.gameService.cellSize,
-      y: this.gameService.gameSize - this.gameService.cellSize
+      x: this.gameService.gameSize - this.gameService.cellSize + offset,
+      y: this.gameService.gameSize - this.gameService.cellSize + offset
     };
     this.endArea = new Area(Colors.GREEN, endAnchor, areaSize, areaSize);
 
