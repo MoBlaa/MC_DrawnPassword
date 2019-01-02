@@ -17,7 +17,7 @@ const MAX_ACCELERATION = 90;
 const BALL_INERTIA = 3.5;
 
 export interface IGameServiceConfig {
-  init: (walls: Array<Brick>) => void;
+  init: (ball: Ball, walls: Array<Brick>) => void;
   update: (ball: Ball, walls: Array<Brick>) => void;
   start: IArea;
   end: IArea;
@@ -33,13 +33,13 @@ export class GameService {
 
   private lastUpdated: number;
 
-  private acceleration: Vector = {x: 0, y: 0};
-  private velocity: Vector = {x: 0, y: 0};
+  private acceleration: Vector = { x: 0, y: 0 };
+  private velocity: Vector = { x: 0, y: 0 };
 
-  readonly gameSize = 4000;
-  readonly mazeSize = 20;
-  readonly cellSize = this.gameSize / this.mazeSize;
-  readonly wallWidth = 20;
+  readonly gameSize: number;
+  readonly mazeSize: number;
+  readonly cellSize: number;
+  readonly wallWidth: number;
 
   private walls: Set<Brick>;
   private startArea: IArea;
@@ -47,7 +47,7 @@ export class GameService {
   private ball: Ball;
 
   // Initializes the bricks
-  private init: (walls: Array<Brick>) => void;
+  private init: (ball: Ball, walls: Array<Brick>) => void;
   // Updates the ball position
   private update: (ball: Ball, walls: Array<Brick>) => void;
   // Handler for reaching the goal
@@ -56,10 +56,18 @@ export class GameService {
   constructor(
     private mazeService: MazeGeneratorService
   ) {
+    this.gameSize = 4000;
+    this.mazeSize = 20;
+    this.cellSize = this.gameSize / this.mazeSize;
+    this.wallWidth = 20;
+
     this.walls = new Set<Brick>();
+    this.ball = new Ball(this.cellSize / 2, this.cellSize / 2, this.cellSize / 4);
+
     this.startTime = -1;
 
-    this.update = () => { };
+    this.update = () => {};
+    this.init = () => {};
 
     this.updateGame = this.updateGame.bind(this);
     this.updateWall = this.updateWall.bind(this);
@@ -87,10 +95,6 @@ export class GameService {
 
   public getWalls(): Array<Brick> {
     return Array.from(this.walls.values());
-  }
-
-  public getBall(): Ball {
-    return this.ball;
   }
 
   public moveByAcceleration(accel: { beta: number, gamma: number }) {
@@ -155,8 +159,6 @@ export class GameService {
     this.velocity.x += ((this.acceleration.x * t) * 3);
     this.velocity.y += ((this.acceleration.y * t) * 3);
 
-    // console.log(`V: ${JSON.stringify(this.velocity)}`);
-
     const updating: Vector = {
       x: this.velocity.x * t,
       y: this.velocity.y * t
@@ -173,10 +175,8 @@ export class GameService {
       updating.y = -MAX_MOVEMENT;
     }
 
-    console.log(`Displacement: ${JSON.stringify(updating)}`);
-
     // Re-calc Ball Position
-    const cords = this.ball.position;
+    const cords: Vector = { ...this.ball.position };
     if (cords.x + updating.x + this.ball.radius > this.gameSize) {
       updating.x = this.gameSize - this.ball.radius - cords.x;
     } else if (cords.x + updating.x - this.ball.radius < 0) {
@@ -223,13 +223,15 @@ export class GameService {
       console.log('Not Moving');
     }
 
+    console.log(`Ball: ${JSON.stringify(this.ball)}`);
+
     // Call callback method to update UI
     this.update(this.ball, this.getWalls());
 
     this.lastUpdated = Date.now();
   }
 
-  private updateWall(wall: {cellOne: Vector, cellTwo: Vector, present: boolean}) {
+  private updateWall(wall: { cellOne: Vector, cellTwo: Vector, present: boolean }) {
     // Check where to place the wall
     const offX = wall.cellOne.x - wall.cellTwo.x;
     const offY = wall.cellOne.y - wall.cellTwo.y;
@@ -305,25 +307,25 @@ export class GameService {
             });
             // bottom
             this.updateWall({
-              cellOne: {x, y: this.mazeSize - 1},
-              cellTwo: {x, y: this.mazeSize},
+              cellOne: { x, y: this.mazeSize - 1 },
+              cellTwo: { x, y: this.mazeSize },
               present: true
             });
             // Left
             this.updateWall({
-              cellOne: {x: -1, y: x},
-              cellTwo: {x: 0, y: x},
+              cellOne: { x: -1, y: x },
+              cellTwo: { x: 0, y: x },
               present: true
             });
             // Right
             this.updateWall({
-              cellOne: {x: this.mazeSize - 1, y: x},
-              cellTwo: {x: this.mazeSize, y: x},
+              cellOne: { x: this.mazeSize - 1, y: x },
+              cellTwo: { x: this.mazeSize, y: x },
               present: true
             });
           }
           console.log('Initialized the maze, starting the game-loop now');
-          this.init(this.getWalls());
+          this.init(this.ball, this.getWalls());
           this.intervalTimer = window.setInterval(() => this.updateGame(), 1000 / this.fps);
         }
       });
@@ -334,6 +336,5 @@ export class GameService {
     window.clearInterval(this.intervalTimer);
     this.intervalTimer = -1;
     this.walls.clear();
-    this.ball = null;
   }
 }

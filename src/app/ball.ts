@@ -19,6 +19,9 @@ export class Ball implements Circle, Collidable {
   }
 
   public updatePosition(x: number, y: number) {
+    if (isNaN(x) || isNaN(y)) {
+      return;
+    }
     this.position = { x: this.position.x + x, y: this.position.y + y };
   }
 

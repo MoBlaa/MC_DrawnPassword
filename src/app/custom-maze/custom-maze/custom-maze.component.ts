@@ -56,8 +56,10 @@ export class CustomMazeComponent {
     });
   }
 
-  public init(walls: Array<Brick>) {
+  public init(ball: Ball, walls: Array<Brick>) {
     const ctx: CanvasRenderingContext2D = this.canvas.nativeElement.getContext('2d');
+    ball.draw(ctx);
+    walls.forEach(wall => wall.draw(ctx));
   }
 
   public update(ball: Ball, walls: Array<Brick>) {
