@@ -7,6 +7,12 @@ export interface IArea extends Rectangle, Collidable {
     draw: (ctx: CanvasRenderingContext2D) => void;
 }
 
+export function isArea(obj: Rectangle & Collidable & any): obj is IArea {
+    return obj.color !== undefined &&
+        obj.handler !== undefined &&
+        obj.draw !== undefined;
+}
+
 export class Area implements IArea {
     public handler: (area: IArea) => void;
     public collided = false;

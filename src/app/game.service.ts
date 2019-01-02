@@ -5,7 +5,7 @@ import { CollisionDetector, Mass } from './physics/collision-detector';
 import { Brick } from './brick';
 import { IWall, toKey } from './maze';
 import { Vector, Rectangle } from './geometrics';
-import { IArea, Area } from './area';
+import { IArea, Area, isArea } from './area';
 
 export enum Direction {
   NORTH, EAST, SOUTH, WEST, NONEX, NONEY
@@ -31,7 +31,7 @@ export class GameService {
   private movement: Vector;
 
   readonly gameSize = 4000;
-  readonly mazeSize = 20;
+  readonly mazeSize = 5;
   readonly cellSize = this.gameSize / this.mazeSize;
   readonly wallWidth = 20;
 
@@ -45,7 +45,7 @@ export class GameService {
   // Updates the ball position
   private update: (ball: Ball) => void;
   // Handler for reaching the goal
-  private finished: () => void = () => { };
+  public finished: () => void = () => { };
 
   constructor(
     private mazeService: MazeGeneratorService
@@ -72,6 +72,7 @@ export class GameService {
 
     // Add handlers for start and End-Area
     this.endArea.handler = () => {
+      console.log('Finished');
       this.finished();
     };
   }
@@ -149,26 +150,33 @@ export class GameService {
     if (!(updating.x === 0 && updating.y === 0)) {
       // Collision Detection
       // Perform Collision Detection with walls
-      const cd = new CollisionDetector(this.ball, this.getWalls());
+      const cd = new CollisionDetector(this.ball, [...this.getWalls(), this.endArea]);
       const [hColl, vColl] = cd.perform(updating);
 
       if (hColl !== null) {
-        hColl.forEach(e => e.collided = true);
+        hColl.forEach(e => {
+          e.collided = true;
+          if (isArea(e)) {
+            e.handler(e);
+          }
+        });
         if (hColl.some(w => w.mass === Mass.NORMAL)) {
           updating.x = 0;
         }
       }
       if (vColl !== null) {
-        vColl.forEach(e => e.collided = true);
+        vColl.forEach(e => {
+          e.collided = true;
+          if (isArea(e)) {
+            e.handler(e);
+          }
+        });
         if (vColl.some(w => w.mass === Mass.NORMAL)) {
           updating.y = 0;
         }
       }
 
       this.ball.updatePosition(updating.x, updating.y);
-
-      // Perform Collision Detection with areas
-
     } else {
       // console.log('Not Moving');
     }

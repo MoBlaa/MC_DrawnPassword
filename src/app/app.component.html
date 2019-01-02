@@ -3,5 +3,6 @@
     <button #start type="button" class="btn btn-primary btn-lg btn-block" (click)="toggleGame()">{{running ? 'Stop
         Game' : 'Start Game'}}</button>
 </div>
-<div #date class="text-center">{{getCurrentTime()}}</div>
+<div #date class="text-center" [hidden]="!running">{{getCurrentTime()}}</div>
+<span #message class="alert alert-success" [hidden]="!alerting"></span>
 <app-custom-maze id="game"></app-custom-maze>

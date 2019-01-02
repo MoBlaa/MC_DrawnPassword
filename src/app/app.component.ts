@@ -11,43 +11,57 @@ import { CustomMazeComponent } from './custom-maze/custom-maze/custom-maze.compo
 export class AppComponent {
   title = 'MazeGame';
 
+  time: string;
   running = false;
 
   @ViewChild('start') btnStart: ElementRef;
   @ViewChild('stop') btnStop: ElementRef;
 
+  alerting = false;
+  @ViewChild('message') alertMessage: ElementRef;
+
   constructor(
     private gameService: GameService
-  ) { }
+  ) {
+    this.finished = this.finished.bind(this);
+    this.gameService.finished = this.finished;
+  }
+
+  public finished(): void {
+    this.stopGame();
+    this.alerting = true;
+    // Show the message
+    this.alertMessage.nativeElement.innerHTML = `Congrats! You took "${this.getCurrentTime()}" (mm:ss)`;
+  }
 
   public getCurrentTime(): string {
     const sinceLast = this.gameService.getStartTime();
     if (sinceLast < 0) {
-      return '00:00';
+      this.time = '00:00';
     } else {
       const now = Date.now();
-      return this.msToString(now - sinceLast);
+      this.time = this.msToString(now - sinceLast);
     }
-
+    return this.time;
   }
 
   private msToString(ms: number): string {
     const diff = ms / 1000;
 
-      // Calc seconds and Minutes
-      const diffSeconds = Math.floor(diff % 60);
-      const diffMinutes = Math.floor(diff / 60);
+    // Calc seconds and Minutes
+    const diffSeconds = Math.floor(diff % 60);
+    const diffMinutes = Math.floor(diff / 60);
 
-      let sDiff = '';
-      if (diffMinutes < 10) {
-        sDiff += '0';
-      }
-      sDiff += `${diffMinutes}:`;
-      if (diffSeconds < 10) {
-        sDiff += '0';
-      }
-      sDiff += `${diffSeconds}`;
-      return sDiff;
+    let sDiff = '';
+    if (diffMinutes < 10) {
+      sDiff += '0';
+    }
+    sDiff += `${diffMinutes}:`;
+    if (diffSeconds < 10) {
+      sDiff += '0';
+    }
+    sDiff += `${diffSeconds}`;
+    return sDiff;
   }
 
   private openFullscreen() {
@@ -78,6 +92,7 @@ export class AppComponent {
     this.openFullscreen();
     this.gameService.start();
     this.running = true;
+    this.alerting = false;
   }
 
   public stopGame() {
