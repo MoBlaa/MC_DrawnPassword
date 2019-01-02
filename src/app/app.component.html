@@ -1,9 +1,7 @@
 <!--The content below is only a placeholder and can be replaced.-->
 <div class="container">
-    <button #start type="button" class="btn btn-primary btn-lg btn-block"
-        (click)="toggleGame()">{{running ? 'Stop Game' : 'Start Game'}}</button>
+    <button #start type="button" class="btn btn-primary btn-lg btn-block" (click)="toggleGame()">{{running ? 'Stop
+        Game' : 'Start Game'}}</button>
 </div>
-<div class="container">
-    <span #date>Time: {{getCurrentTime()}}</span>
-</div>
+<div #date class="text-center">{{getCurrentTime()}}</div>
 <app-custom-maze id="game"></app-custom-maze>
