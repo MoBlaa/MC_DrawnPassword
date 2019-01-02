@@ -15,7 +15,7 @@ const MAX_MOVEMENT = 100;
 
 export interface IGameServiceConfig {
   init: (walls: Array<Brick>) => void;
-  update: (ball: Ball) => void;
+  update: (ball: Ball, walls: Array<Brick>) => void;
   start: IArea;
   end: IArea;
 }
@@ -25,13 +25,13 @@ export interface IGameServiceConfig {
 })
 export class GameService {
   private startTime: number;
-  private fps = 40;
+  private fps = 30;
   private intervalTimer: number;
 
   private movement: Vector;
 
   readonly gameSize = 4000;
-  readonly mazeSize = 5;
+  readonly mazeSize = 20;
   readonly cellSize = this.gameSize / this.mazeSize;
   readonly wallWidth = 20;
 
@@ -43,7 +43,7 @@ export class GameService {
   // Initializes the bricks
   private init: (walls: Array<Brick>) => void;
   // Updates the ball position
-  private update: (ball: Ball) => void;
+  private update: (ball: Ball, walls: Array<Brick>) => void;
   // Handler for reaching the goal
   public finished: () => void = () => { };
 
@@ -182,7 +182,7 @@ export class GameService {
     }
 
     // Call callback method to update UI
-    this.update(this.ball);
+    this.update(this.ball, this.getWalls());
   }
 
   private updateWall(wall: IWall) {

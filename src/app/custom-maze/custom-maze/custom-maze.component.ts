@@ -22,7 +22,6 @@ enum KeyCode {
 export class CustomMazeComponent {
 
   @ViewChild('board') canvas: ElementRef;
-  oldBall: Ball = null;
 
   startArea: IArea;
   endArea: IArea;
@@ -39,7 +38,7 @@ export class CustomMazeComponent {
     renderer.listen('window', 'deviceorientation', this.handleAcceleration);
 
     // Init areas
-    const offset = this.gameService.cellSize / 3;
+    const offset = this.gameService.cellSize / 4;
     const areaSize = this.gameService.cellSize - 2 * offset;
     this.startArea = new Area(Colors.RED, { x: offset, y: offset }, areaSize, areaSize);
     const endAnchor: Vector = {
@@ -62,6 +61,11 @@ export class CustomMazeComponent {
 
   public init(walls: Array<Brick>) {
     const ctx: CanvasRenderingContext2D = this.canvas.nativeElement.getContext('2d');
+  }
+
+  public update(ball: Ball, walls: Array<Brick>) {
+    // Move ball if key pressed
+    const ctx: CanvasRenderingContext2D = this.canvas.nativeElement.getContext('2d');
 
     // Clear the board
     ctx.fillStyle = Colors.WHITE;
@@ -69,16 +73,6 @@ export class CustomMazeComponent {
 
     // Draw walls
     walls.forEach(wall => wall.draw(ctx));
-  }
-
-  public update(ball: Ball) {
-    // Move ball if key pressed
-    const ctx: CanvasRenderingContext2D = this.canvas.nativeElement.getContext('2d');
-
-    // Clear old position
-    if (this.oldBall != null) {
-      this.oldBall.draw(ctx);
-    }
 
     // Draw start and End-Area
     this.startArea.draw(ctx);
@@ -86,7 +80,6 @@ export class CustomMazeComponent {
 
     // Update the Ball
     ball.draw(ctx);
-    this.oldBall = new Ball(ball.position.x, ball.position.y, ball.radius + 1, Colors.WHITE);
   }
 
   handleAcceleration(event: DeviceOrientationEvent) {
