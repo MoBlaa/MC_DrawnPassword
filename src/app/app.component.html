@@ -1,9 +1,9 @@
 <!--The content below is only a placeholder and can be replaced.-->
 <button #start type="button" class="btn btn-primary btn-lg btn-block" (click)="toggleGame()">{{running ? 'Stop
     Game' : 'Start Game'}}</button>
-<div class="container-fluid text-center">
-    <span #date [hidden]="!running">Time: {{time}}</span>
-    <span #highscore>Highscore: {{getHighscore()}}</span>
+<div class="d-flex justify-content-around">
+    <div #date [hidden]="!running">Time: {{time}}</div>
+    <div #highscore >Highscore: {{getHighscore()}}</div>
 </div>
 <div #message class="alert alert-success" [hidden]="!alerting"></div>
 <app-custom-maze id="game"></app-custom-maze>

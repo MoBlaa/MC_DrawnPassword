@@ -29,6 +29,8 @@ export class GameService {
   private fps = 30;
   private intervalTimer: number;
 
+  private maxMove = MAX_MOVEMENT;
+
   private movement: Vector;
 
   readonly gameSize = 4000;
@@ -49,8 +51,7 @@ export class GameService {
   public finished: () => void = () => { };
 
   constructor(
-    private mazeService: MazeGeneratorService,
-    private gameStateService: GameStateService
+    private mazeService: MazeGeneratorService
   ) {
     this.movement = {
       x: 0, y: 0
