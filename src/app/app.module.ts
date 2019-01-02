@@ -6,6 +6,7 @@ import { DeviceDetectorModule } from 'ngx-device-detector';
 
 import { AppComponent } from './app.component';
 import { CustomMazeModule } from './custom-maze/custom-maze.module';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 @NgModule({
   declarations: [
@@ -15,7 +16,8 @@ import { CustomMazeModule } from './custom-maze/custom-maze.module';
     BrowserModule,
     PhaserModule,
     CustomMazeModule,
-    DeviceDetectorModule.forRoot()
+    DeviceDetectorModule.forRoot(),
+    BrowserAnimationsModule
   ],
   providers: [],
   bootstrap: [AppComponent]

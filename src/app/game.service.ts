@@ -19,7 +19,7 @@ const MAX_MOVEMENT = 100;
 export class GameService {
   private gameDuration: number;
   private startTime: number;
-  private fps = 60;
+  private fps = 40;
   private intervalTimer: number;
 
   private movement: Vector;
