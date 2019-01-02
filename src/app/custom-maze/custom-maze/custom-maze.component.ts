@@ -6,6 +6,7 @@ import { Brick } from 'src/app/brick';
 import { Ball } from 'src/app/ball';
 import { IArea, Area } from 'src/app/area';
 import { Vector } from 'src/app/geometrics';
+import { GameState, GameStateService } from 'src/app/game-state.service';
 
 enum KeyCode {
   RIGHT_ARROW = 39,

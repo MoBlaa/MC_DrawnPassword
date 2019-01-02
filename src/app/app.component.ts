@@ -2,6 +2,7 @@ import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { GameService } from './game.service';
 import * as screenfull from 'screenfull';
 import { CustomMazeComponent } from './custom-maze/custom-maze/custom-maze.component';
+import { GameStateService } from './game-state.service';
 
 @Component({
   selector: 'app-root',
@@ -12,6 +13,8 @@ export class AppComponent {
   title = 'MazeGame';
 
   time: string;
+  msTime: number;
+
   running = false;
 
   timeUpdater: number;
@@ -23,7 +26,8 @@ export class AppComponent {
   @ViewChild('message') alertMessage: ElementRef;
 
   constructor(
-    private gameService: GameService
+    private gameService: GameService,
+    private gameStateService: GameStateService
   ) {
     this.finished = this.finished.bind(this);
     this.gameService.finished = this.finished;
@@ -34,7 +38,19 @@ export class AppComponent {
     this.alerting = true;
     // Show the message
     this.alertMessage.nativeElement.innerHTML = `Congrats! You took "${this.time}" (mm:ss)`;
+
+    // Compare time with highscore
+    if (this.msTime < this.gameStateService.loadGamestate().highscore) {
+      this.gameStateService.saveGamestate({
+        highscore: this.msTime
+      });
+    }
+
     this.time = this.msToString(0);
+  }
+
+  public getHighscore(): string {
+    return this.msToString(this.gameStateService.loadGamestate().highscore);
   }
 
   public getCurrentTime(): number {
@@ -83,12 +99,6 @@ export class AppComponent {
     }
   }
 
-  private exitFullscreen(): void {
-    if (screenfull) {
-      screenfull.exit();
-    }
-  }
-
   public startGame() {
     // Fullscreen and start game
     this.openFullscreen();
@@ -97,7 +107,8 @@ export class AppComponent {
     this.alerting = false;
 
     this.timeUpdater = window.setInterval(() => {
-      this.time = this.msToString(this.getCurrentTime());
+      this.msTime = this.getCurrentTime();
+      this.time = this.msToString(this.msTime);
     }, 1000);
   }
 

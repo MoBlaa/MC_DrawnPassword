@@ -6,6 +6,7 @@ import { Brick } from './brick';
 import { IWall, toKey } from './maze';
 import { Vector, Rectangle } from './geometrics';
 import { IArea, Area, isArea } from './area';
+import { GameStateService } from './game-state.service';
 
 export enum Direction {
   NORTH, EAST, SOUTH, WEST, NONEX, NONEY
@@ -48,7 +49,8 @@ export class GameService {
   public finished: () => void = () => { };
 
   constructor(
-    private mazeService: MazeGeneratorService
+    private mazeService: MazeGeneratorService,
+    private gameStateService: GameStateService
   ) {
     this.movement = {
       x: 0, y: 0
@@ -134,6 +136,10 @@ export class GameService {
   }
 
   public updateGame() {
+    if (!this.ball) {
+      return;
+    }
+
     // Re-calc Ball Position
     const cords = this.ball.position;
     const updating: Vector = { x: this.movement.x, y: this.movement.y };
