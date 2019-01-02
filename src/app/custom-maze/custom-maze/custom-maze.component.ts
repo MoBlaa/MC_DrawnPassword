@@ -2,9 +2,10 @@ import { Component, ViewChild, ElementRef, HostListener, Renderer2 } from '@angu
 import { Colors } from '../../colors.enum';
 import { GameService, Direction } from '../../game.service';
 import { isNull } from 'util';
-import { Vector, Circle } from 'src/app/physics/collision-detection';
 import { Brick } from 'src/app/brick';
 import { Ball } from 'src/app/ball';
+import { IArea, Area } from 'src/app/area';
+import { Vector } from 'src/app/geometrics';
 
 enum KeyCode {
   RIGHT_ARROW = 39,
@@ -23,6 +24,9 @@ export class CustomMazeComponent {
   @ViewChild('board') canvas: ElementRef;
   oldBall: Ball = null;
 
+  startArea: IArea;
+  endArea: IArea;
+
   constructor(
     private gameService: GameService,
     renderer: Renderer2
@@ -32,10 +36,23 @@ export class CustomMazeComponent {
     this.update = this.update.bind(this);
     this.init = this.init.bind(this);
 
-    this.gameService.init = this.init;
-    this.gameService.update = this.update;
-
     renderer.listen('window', 'deviceorientation', this.handleAcceleration);
+
+    // Init areas
+    const areaSize = this.gameService.cellSize;
+    this.startArea = new Area(Colors.RED, { x: 0, y: 0}, areaSize, areaSize);
+    const endAnchor: Vector = {
+      x: this.gameService.gameSize - this.gameService.cellSize,
+      y: this.gameService.gameSize - this.gameService.cellSize
+    };
+    this.endArea = new Area(Colors.GREEN, endAnchor, areaSize, areaSize);
+
+    this.gameService.setup({
+      init: this.init,
+      update: this.update,
+      start: this.startArea,
+      end: this.endArea
+    });
   }
 
   public getMovement(): Vector {
@@ -44,8 +61,12 @@ export class CustomMazeComponent {
 
   public init(walls: Array<Brick>) {
     const ctx: CanvasRenderingContext2D = this.canvas.nativeElement.getContext('2d');
+
+    // Clear the board
     ctx.fillStyle = Colors.WHITE;
     ctx.fillRect(0, 0, 4000, 4000);
+
+    // Draw walls
     walls.forEach(wall => wall.draw(ctx));
   }
 
@@ -58,7 +79,11 @@ export class CustomMazeComponent {
       this.oldBall.draw(ctx);
     }
 
-    // Update the UI
+    // Draw start and End-Area
+    this.startArea.draw(ctx);
+    this.endArea.draw(ctx);
+
+    // Update the Ball
     ball.draw(ctx);
     this.oldBall = new Ball(ball.position.x, ball.position.y, ball.radius + 1, Colors.WHITE);
   }

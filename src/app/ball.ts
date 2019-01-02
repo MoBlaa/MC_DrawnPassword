@@ -1,11 +1,14 @@
 import { Colors } from './colors.enum';
-import { Circle, Vector } from './physics/collision-detection';
+import { Circle, Vector } from './geometrics';
+import { Collidable, Mass } from './physics/collision-detector';
 
-export class Ball implements Circle {
+export class Ball implements Circle, Collidable {
+  mass = Mass.NORMAL;
 
   position: Vector;
   radius: number;
   color: string;
+  collided = false;
 
   constructor(x: number, y: number, radius: number, color = Colors.GREY) {
     this.position = { x, y };

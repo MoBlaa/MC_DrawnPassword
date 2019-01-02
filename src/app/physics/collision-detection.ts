@@ -1,38 +1,16 @@
 import { isNumber } from 'util';
-
-export interface Range {
-  min: number;
-  max: number;
-}
-
-export interface Vector {
-  x: number;
-  y: number;
-}
+import { Rectangle, Vector, Line, Circle, dist, Range } from '../geometrics';
 
 export function isAPoint(p: any): p is Vector {
   return 'x' in p && 'y' in p;
 }
 
-export type Line = [Vector, Vector];
-
 export function isALine(l: any): l is Line {
   return l instanceof Array && l.length === 2 && isAPoint(l[0]) && isAPoint(l[1]);
 }
 
-export interface Circle {
-  position: Vector;
-  radius: number;
-}
-
 export function isACircle(c: any): c is Circle {
   return 'position' in c && 'radius' in c && isAPoint(c.position) && isNumber(c.radius);
-}
-
-export interface Rectangle {
-  anchor: Vector;
-  width: number;
-  height: number;
 }
 
 export function isARectangle(r: any): r is Rectangle {
@@ -41,13 +19,6 @@ export function isARectangle(r: any): r is Rectangle {
 
 export function randomInside(range: Range): number {
   return Math.floor(Math.random() * range.max) + range.min;
-}
-
-function dist(point: Vector, point2: Vector): number {
-  return Math.sqrt(
-    (point2.x - point.x) * (point2.x - point.x) +
-    (point2.y - point.y) * (point2.y - point.y)
-  );
 }
 
 function inside(x: number, range: Range) {

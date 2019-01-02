@@ -1,20 +1,33 @@
 import { Ball } from '../ball';
-import { Circle, rectangleCircle, Rectangle, Vector } from './collision-detection';
+import { Rectangle, Vector, Circle } from '../geometrics';
+import { rectangleCircle } from './collision-detection';
 
-export class CollisionDetector<C extends Rectangle> {
+export enum Mass {
+    NONE = 0,
+    NORMAL = 1
+}
+
+export interface Collidable {
+    collided: boolean;
+    mass: number;
+}
+
+export type Colli = Collidable & Rectangle;
+
+export class CollisionDetector {
     constructor(
         private ball: Ball,
-        private walls: Array<C>
+        private walls: Array<Colli>
     ) { }
 
     /**
      * Returns if [horizontal, vertical] overlapping has happened.
      */
-    perform(changes: Vector): [C, C] {
+    perform(changes: Vector): [ Array<Colli>, Array<Colli>] {
         // Check if Ball collides with wall
         const ballCords = this.ball.position;
         const ballR = this.ball.radius;
-        const overlapping: [C, C] = [null, null];
+        const overlapping: [ Array<Colli>, Array<Colli>] = [[], []];
         const ballMoved: Circle = {
             position: {
                 x: ballCords.x + changes.x,
@@ -46,10 +59,10 @@ export class CollisionDetector<C extends Rectangle> {
             const collidesY = rectangleCircle(wall, ballMovedY);
 
             if (collidesX) {
-                overlapping[0] = wall;
+                overlapping[0].push(wall);
             }
             if (collidesY) {
-                overlapping[1] = wall;
+                overlapping[1].push(wall);
             }
 
             wallRes = wallIter.next();

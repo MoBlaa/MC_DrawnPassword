@@ -1,17 +1,24 @@
 import { Injectable } from '@angular/core';
 import { Ball } from './ball';
 import { MazeGeneratorService } from './mazegenerator.service';
-import { CollisionDetector } from './physics/collision-detector';
+import { CollisionDetector, Mass } from './physics/collision-detector';
 import { Brick } from './brick';
 import { IWall, toKey } from './maze';
-import { Vector } from './physics/collision-detection';
-import { Subscription } from 'rxjs';
+import { Vector, Rectangle } from './geometrics';
+import { IArea, Area } from './area';
 
 export enum Direction {
   NORTH, EAST, SOUTH, WEST, NONEX, NONEY
 }
 
 const MAX_MOVEMENT = 100;
+
+export interface IGameServiceConfig {
+  init: (walls: Array<Brick>) => void;
+  update: (ball: Ball) => void;
+  start: IArea;
+  end: IArea;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -23,18 +30,22 @@ export class GameService {
 
   private movement: Vector;
 
-  private gameSize = 4000;
+  readonly gameSize = 4000;
   readonly mazeSize = 20;
-  private cellSize = this.gameSize / this.mazeSize;
-  private wallWidth = 20;
+  readonly cellSize = this.gameSize / this.mazeSize;
+  readonly wallWidth = 20;
 
   private walls: Set<Brick>;
+  private startArea: IArea;
+  private endArea: IArea;
   private ball: Ball;
 
   // Initializes the bricks
-  public init: (walls: Array<Brick>) => void;
+  private init: (walls: Array<Brick>) => void;
   // Updates the ball position
-  public update: (ball: Ball) => void;
+  private update: (ball: Ball) => void;
+  // Handler for reaching the goal
+  private finished: () => void = () => { };
 
   constructor(
     private mazeService: MazeGeneratorService
@@ -50,6 +61,19 @@ export class GameService {
     this.updateWall = this.updateWall.bind(this);
     this.stop = this.stop.bind(this);
     this.start = this.start.bind(this);
+  }
+
+  public setup(config: IGameServiceConfig): void {
+    // Init the Service with given config
+    this.init = config.init;
+    this.update = config.update;
+    this.startArea = config.start;
+    this.endArea = config.end;
+
+    // Add handlers for start and End-Area
+    this.endArea.handler = () => {
+      this.finished();
+    };
   }
 
   public getStartTime(): number {
@@ -124,21 +148,27 @@ export class GameService {
     }
     if (!(updating.x === 0 && updating.y === 0)) {
       // Collision Detection
-      // Perform Collision Detection
+      // Perform Collision Detection with walls
       const cd = new CollisionDetector(this.ball, this.getWalls());
       const [hColl, vColl] = cd.perform(updating);
 
       if (hColl !== null) {
-        hColl.collided = true;
-        updating.x = 0;
+        hColl.forEach(e => e.collided = true);
+        if (hColl.some(w => w.mass === Mass.NORMAL)) {
+          updating.x = 0;
+        }
       }
       if (vColl !== null) {
-        vColl.collided = true;
-        updating.y = 0;
+        vColl.forEach(e => e.collided = true);
+        if (vColl.some(w => w.mass === Mass.NORMAL)) {
+          updating.y = 0;
+        }
       }
 
       this.ball.updatePosition(updating.x, updating.y);
-      // console.log(`Moving @ { x: ${updating.x}, y: ${updating.y} }`);
+
+      // Perform Collision Detection with areas
+
     } else {
       // console.log('Not Moving');
     }
@@ -197,8 +227,6 @@ export class GameService {
       this.walls.delete(duplicate);
     }
   }
-
-  // ========== Mobile Game Controls ==========
 
   // ========== Game Controls ==========
 

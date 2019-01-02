@@ -1,6 +1,6 @@
-import { Rectangle, Vector, Circle, Line, isAPoint, pointPoint, isALine, pointLine, isACircle, pointCircle, isARectangle, pointRectangle, rectangleCircle } from './collision-detection';
 import { Colors } from '../colors.enum';
-import { Ball } from '../ball';
+import { Vector, Circle, Rectangle } from '../geometrics';
+import { rectangleCircle } from './collision-detection';
 
 export interface Size {
     height: number;
