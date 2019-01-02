@@ -17,7 +17,6 @@ const MAX_MOVEMENT = 100;
   providedIn: 'root'
 })
 export class GameService {
-  private gameDuration: number;
   private startTime: number;
   private fps = 40;
   private intervalTimer: number;
@@ -44,6 +43,7 @@ export class GameService {
       x: 0, y: 0
     };
     this.walls = new Set<Brick>();
+    this.startTime = -1;
 
     this.update = () => { };
 
@@ -52,8 +52,8 @@ export class GameService {
     this.start = this.start.bind(this);
   }
 
-  public getTimePlayed(): number {
-    return this.gameDuration;
+  public getStartTime(): number {
+    return this.startTime;
   }
 
   public getWalls(): Array<Brick> {
@@ -220,7 +220,6 @@ export class GameService {
   }
 
   public stop() {
-    this.gameDuration = 0;
     this.startTime = -1;
     window.clearInterval(this.intervalTimer);
     this.intervalTimer = -1;

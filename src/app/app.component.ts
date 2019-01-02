@@ -11,9 +11,44 @@ import { CustomMazeComponent } from './custom-maze/custom-maze/custom-maze.compo
 export class AppComponent {
   title = 'MazeGame';
 
+  running = false;
+
+  @ViewChild('start') btnStart: ElementRef;
+  @ViewChild('stop') btnStop: ElementRef;
+
   constructor(
     private gameService: GameService
   ) { }
+
+  public getCurrentTime(): string {
+    const sinceLast = this.gameService.getStartTime();
+    if (sinceLast < 0) {
+      return '00:00';
+    } else {
+      const now = Date.now();
+      return this.msToString(now - sinceLast);
+    }
+
+  }
+
+  private msToString(ms: number): string {
+    const diff = ms / 1000;
+
+      // Calc seconds and Minutes
+      const diffSeconds = Math.floor(diff % 60);
+      const diffMinutes = Math.floor(diff / 60);
+
+      let sDiff = '';
+      if (diffMinutes < 10) {
+        sDiff += '0';
+      }
+      sDiff += `${diffMinutes}:`;
+      if (diffSeconds < 10) {
+        sDiff += '0';
+      }
+      sDiff += `${diffSeconds}`;
+      return sDiff;
+  }
 
   private openFullscreen() {
     if (screenfull) {
@@ -26,6 +61,7 @@ export class AppComponent {
       screenfull.onchange(() => {
         if (screenfull && !screenfull.isFullscreen) {
           this.gameService.stop();
+          this.running = false;
         }
       });
     }
@@ -38,12 +74,23 @@ export class AppComponent {
   }
 
   public startGame() {
+    // Fullscreen and start game
     this.openFullscreen();
     this.gameService.start();
+    this.running = true;
   }
 
   public stopGame() {
     this.exitFullscreen();
     this.gameService.stop();
+    this.running = false;
+  }
+
+  public toggleGame(): void {
+    if (this.running) {
+      this.stopGame();
+    } else {
+      this.startGame();
+    }
   }
 }
