@@ -56,10 +56,6 @@ export class CustomMazeComponent {
     });
   }
 
-  public getMovement(): Vector {
-    return this.gameService.getMovement();
-  }
-
   public init(walls: Array<Brick>) {
     const ctx: CanvasRenderingContext2D = this.canvas.nativeElement.getContext('2d');
   }

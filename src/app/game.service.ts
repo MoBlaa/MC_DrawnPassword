@@ -12,7 +12,9 @@ export enum Direction {
   NORTH, EAST, SOUTH, WEST, NONEX, NONEY
 }
 
-const MAX_MOVEMENT = 100;
+const MAX_MOVEMENT = 50;
+const MAX_ACCELERATION = 90;
+const BALL_INERTIA = 3.5;
 
 export interface IGameServiceConfig {
   init: (walls: Array<Brick>) => void;
@@ -29,9 +31,10 @@ export class GameService {
   private fps = 30;
   private intervalTimer: number;
 
-  private maxMove = MAX_MOVEMENT;
+  private lastUpdated: number;
 
-  private movement: Vector;
+  private acceleration: Vector = {x: 0, y: 0};
+  private velocity: Vector = {x: 0, y: 0};
 
   readonly gameSize = 4000;
   readonly mazeSize = 20;
@@ -53,14 +56,12 @@ export class GameService {
   constructor(
     private mazeService: MazeGeneratorService
   ) {
-    this.movement = {
-      x: 0, y: 0
-    };
     this.walls = new Set<Brick>();
     this.startTime = -1;
 
     this.update = () => { };
 
+    this.updateGame = this.updateGame.bind(this);
     this.updateWall = this.updateWall.bind(this);
     this.stop = this.stop.bind(this);
     this.start = this.start.bind(this);
@@ -92,66 +93,98 @@ export class GameService {
     return this.ball;
   }
 
-  public getMovement(): Vector {
-    return this.movement;
-  }
-
   public moveByAcceleration(accel: { beta: number, gamma: number }) {
-    this.movement.x = accel.gamma;
-    this.movement.y = accel.beta;
+    this.acceleration.x = accel.gamma ? accel.gamma * 1.5 : 0;
+    this.acceleration.y = accel.beta ? accel.beta * 1.5 : 0;
 
-    if (this.movement.x > MAX_MOVEMENT) {
-      this.movement.x = MAX_MOVEMENT;
+    // We dont want the device upside down so we limit to 90°
+    if (this.acceleration.x > MAX_ACCELERATION) {
+      this.acceleration.x = MAX_ACCELERATION;
+    } else if (this.acceleration.x < -MAX_ACCELERATION) {
+      this.acceleration.x = -MAX_ACCELERATION;
     }
-    if (this.movement.y > MAX_MOVEMENT) {
-      this.movement.y = MAX_MOVEMENT;
+
+    if (this.acceleration.y > MAX_ACCELERATION) {
+      this.acceleration.y = MAX_ACCELERATION;
+    } else if (this.acceleration.y < -MAX_ACCELERATION) {
+      this.acceleration.y = -MAX_ACCELERATION;
     }
   }
 
   public moveByDirection(direction: Direction) {
     switch (direction) {
       case Direction.NORTH: {
-        this.movement.y = -MAX_MOVEMENT;
+        this.acceleration.y = -MAX_MOVEMENT;
         break;
       }
       case Direction.EAST: {
-        this.movement.x = MAX_MOVEMENT;
+        this.acceleration.x = MAX_MOVEMENT;
         break;
       }
       case Direction.SOUTH: {
-        this.movement.y = MAX_MOVEMENT;
+        this.acceleration.y = MAX_MOVEMENT;
         break;
       }
       case Direction.WEST: {
-        this.movement.x = -MAX_MOVEMENT;
+        this.acceleration.x = -MAX_MOVEMENT;
         break;
       }
       case Direction.NONEX: {
-        this.movement.x = 0;
+        this.acceleration.x = 0;
         break;
       }
       case Direction.NONEY: {
-        this.movement.y = 0;
+        this.acceleration.y = 0;
       }
     }
   }
 
   public updateGame() {
-    if (!this.ball) {
-      return;
+    if (!this.velocity.x) {
+      this.velocity.x = 0;
     }
+    if (!this.velocity.y) {
+      this.velocity.y = 0;
+    }
+
+    // Calculate the passed time
+    const now = Date.now();
+    const t = (now - this.lastUpdated) / 100;
+
+    // Calculate velocity
+    this.velocity.x += ((this.acceleration.x * t) * 3);
+    this.velocity.y += ((this.acceleration.y * t) * 3);
+
+    // console.log(`V: ${JSON.stringify(this.velocity)}`);
+
+    const updating: Vector = {
+      x: this.velocity.x * t,
+      y: this.velocity.y * t
+    };
+
+    if (updating.x > MAX_MOVEMENT) {
+      updating.x = MAX_MOVEMENT;
+    } else if (updating.x < -MAX_MOVEMENT) {
+      updating.x = -MAX_MOVEMENT;
+    }
+    if (updating.y > MAX_MOVEMENT) {
+      updating.y = MAX_MOVEMENT;
+    } else if (updating.y < -MAX_MOVEMENT) {
+      updating.y = -MAX_MOVEMENT;
+    }
+
+    console.log(`Displacement: ${JSON.stringify(updating)}`);
 
     // Re-calc Ball Position
     const cords = this.ball.position;
-    const updating: Vector = { x: this.movement.x, y: this.movement.y };
-    if (cords.x + this.movement.x + this.ball.radius > this.gameSize) {
+    if (cords.x + updating.x + this.ball.radius > this.gameSize) {
       updating.x = this.gameSize - this.ball.radius - cords.x;
-    } else if (cords.x + this.movement.x - this.ball.radius < 0) {
+    } else if (cords.x + updating.x - this.ball.radius < 0) {
       updating.x = -(cords.x - this.ball.radius);
     }
-    if (cords.y + this.movement.y + this.ball.radius > this.gameSize) {
+    if (cords.y + updating.y + this.ball.radius > this.gameSize) {
       updating.y = this.gameSize - this.ball.radius - cords.y;
-    } else if (cords.y + this.movement.y - this.ball.radius < 0) {
+    } else if (cords.y + updating.y - this.ball.radius < 0) {
       updating.y = -(cords.y - this.ball.radius);
     }
     if (!(updating.x === 0 && updating.y === 0)) {
@@ -169,6 +202,7 @@ export class GameService {
         });
         if (hColl.some(w => w.mass === Mass.NORMAL)) {
           updating.x = 0;
+          this.velocity.x *= -(1 / BALL_INERTIA);
         }
       }
       if (vColl !== null) {
@@ -180,19 +214,22 @@ export class GameService {
         });
         if (vColl.some(w => w.mass === Mass.NORMAL)) {
           updating.y = 0;
+          this.velocity.y *= -(1 / BALL_INERTIA);
         }
       }
 
       this.ball.updatePosition(updating.x, updating.y);
     } else {
-      // console.log('Not Moving');
+      console.log('Not Moving');
     }
 
     // Call callback method to update UI
     this.update(this.ball, this.getWalls());
+
+    this.lastUpdated = Date.now();
   }
 
-  private updateWall(wall: IWall) {
+  private updateWall(wall: {cellOne: Vector, cellTwo: Vector, present: boolean}) {
     // Check where to place the wall
     const offX = wall.cellOne.x - wall.cellTwo.x;
     const offY = wall.cellOne.y - wall.cellTwo.y;
@@ -246,7 +283,6 @@ export class GameService {
   // ========== Game Controls ==========
 
   public start() {
-    this.stop();
     this.ball = new Ball(this.cellSize / 2, this.cellSize / 2, this.cellSize / 4);
     this.startTime = Date.now();
 
@@ -255,6 +291,37 @@ export class GameService {
       .subscribe({
         next: this.updateWall,
         complete: () => {
+          // Add walls to limit the board
+          for (let x = 0; x < this.mazeSize; x++) {
+            // top
+            this.updateWall({
+              cellOne: {
+                x, y: -1
+              },
+              cellTwo: {
+                x, y: 0
+              },
+              present: true
+            });
+            // bottom
+            this.updateWall({
+              cellOne: {x, y: this.mazeSize - 1},
+              cellTwo: {x, y: this.mazeSize},
+              present: true
+            });
+            // Left
+            this.updateWall({
+              cellOne: {x: -1, y: x},
+              cellTwo: {x: 0, y: x},
+              present: true
+            });
+            // Right
+            this.updateWall({
+              cellOne: {x: this.mazeSize - 1, y: x},
+              cellTwo: {x: this.mazeSize, y: x},
+              present: true
+            });
+          }
           console.log('Initialized the maze, starting the game-loop now');
           this.init(this.getWalls());
           this.intervalTimer = window.setInterval(() => this.updateGame(), 1000 / this.fps);
